@@ -383,7 +383,6 @@ V.scan=()=>{const left=scanLeft();return `${crumb('AI Face Shape Analysis')}
     <button class="btn light full" data-act="${S.stream?'camOff':'camOn'}" ${S.scanning?'disabled':''}><i class="fa-solid ${S.stream?'fa-video-slash':'fa-video'}"></i> ${S.stream?'Tutup Kamera':'Buka Kamera'}</button>
     <label class="btn light full" for="scanfile" style="cursor:pointer"><i class="fa-solid fa-camera"></i> ${S.scanPhoto?'Ganti foto':'Ambil / Unggah Foto'}</label><input type="file" id="scanfile" accept="image/*" capture="user" hidden>
     ${left?`<button class="btn full" data-act="startScan" ${S.scanning?'disabled':''}>${S.scanning?'Memindai…':'Mulai Scan'}</button><span class="xs muted" style="text-align:center">Setiap scan memakai 1 kuota</span>`:`<button class="btn blue full" data-act="toPacks">Beli Paket Scan</button>`}
-    <p class="xs muted" style="margin:0;line-height:1.5">Foto hanya dipakai untuk analisis di perangkatmu dan tidak disimpan.</p>
   </div>
   <div class="card flat sec" id="scanpacks" style="gap:12px;${left?'':'border:2px solid var(--blue)'}">
     <div class="spread"><b style="font-size:15px">Beli Kuota AI Scan</b><span class="xs muted">Sisa ${left}x</span></div>
@@ -734,11 +733,12 @@ const ACT={
     const fail=m=>{if(tok!==S.scanTok||!S.scanning)return;clearTimers();S.scanning=false;render(true);toast(m)};
     try{
       const image=await shrinkImg(S.scanPhoto);
-      const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image})});
+      const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image}),signal:AbortSignal.timeout(45000)});
       const d=await r.json().catch(()=>({}));
       if(tok!==S.scanTok||!S.scanning)return;
       if(r.status===422)return fail('Wajah tidak terdeteksi. Coba foto lain dengan pencahayaan cukup. Kuota tidak terpakai.');
       if(r.status===429)return fail('Layanan AI sedang ramai. Coba lagi sebentar lagi. Kuota tidak terpakai.');
+      if(r.status===504)return fail('Analisis terlalu lama. Coba lagi. Kuota tidak terpakai.');
       if(!r.ok||!d.result)return fail('Analisis gagal. Coba lagi nanti. Kuota tidak terpakai.');
       const R=d.result;
       S.aiStyles=R.styles.map(x=>({n:x.name,m:x.match,why:x.why,h:(STYLES.find(t=>t.n===x.name)||{}).h||'crop'}));
@@ -746,7 +746,7 @@ const ACT={
       if(S.scanFree>0)S.scanFree--;else S.scanCredits--;
       clearTimers();const b=document.getElementById('scanbar');if(b)b.style.width='100%';
       timers.push(setTimeout(()=>go('hasil'),250));
-    }catch(e){fail('Tidak bisa terhubung ke AI. Cek koneksi internetmu. Kuota tidak terpakai.')}
+    }catch(e){fail(e&&e.name==='TimeoutError'?'Analisis terlalu lama. Coba lagi. Kuota tidak terpakai.':'Tidak bisa terhubung ke AI. Cek koneksi internetmu. Kuota tidak terpakai.')}
   },
   pickStyle:id=>{S.style=id;render(true)},
   selBarber:id=>{S.barber=id;render(true)},
@@ -803,6 +803,9 @@ document.getElementById('reset').onclick=()=>{clearTimers();S=initial();render()
 const h=location.hash.slice(1);if(V[h])S.screen=h;
 render();
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
