@@ -65,22 +65,32 @@ module.exports = async function handler(req, res) {
   const m = typeof image === "string" && image.length < MAX_IMG_CHARS ? image.match(IMG_RE) : null;
   if (!m) return res.status(400).json({ error: "invalid_image" });
 
-  const body = JSON.stringify({
-    contents: [{ parts: [{ text: PROMPT }, { inlineData: { mimeType: m[1], data: m[2] } }] }],
-    generationConfig: { responseMimeType: "application/json", temperature: 0.3 },
-  });
+  const makeBody = (fast) =>
+    JSON.stringify({
+      contents: [{ parts: [{ text: PROMPT }, { inlineData: { mimeType: m[1], data: m[2] } }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.3,
+        // "low" = berpikir singkat supaya cepat (default model bisa "high" dan lambat)
+        ...(fast ? { thinkingConfig: { thinkingLevel: "low" } } : {}),
+      },
+    });
+
+  const call = (model, fast) =>
+    fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+      body: makeBody(fast),
+      signal: AbortSignal.timeout(30000), // jangan menggantung lebih dari 30 detik
+    });
 
   let lastStatus = 502;
   for (const model of MODELS) {
     try {
-      const r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
-          body,
-        }
-      );
+      const t0 = Date.now();
+      let r = await call(model, true);
+      if (r.status === 400) r = await call(model, false); // model tidak mendukung thinkingLevel -> ulangi tanpa itu
+      console.log("gemini", model, r.status, Date.now() - t0 + "ms");
       if (r.status === 404) { lastStatus = 404; continue; } // nama model tidak ada -> coba model berikutnya
       if (r.status === 429) return res.status(429).json({ error: "busy" });
       const data = await r.json();
@@ -92,10 +102,11 @@ module.exports = async function handler(req, res) {
       if (raw.face_detected === false) return res.status(422).json({ error: "no_face" });
       return res.status(200).json({ result: sanitize(raw) });
     } catch (e) {
-      console.error("analyze failed", e);
-      lastStatus = 502;
+      console.error("analyze failed", e && e.name, e && e.message);
+      lastStatus = e && e.name === "TimeoutError" ? 504 : 502;
       break;
     }
   }
   return res.status(502).json({ error: "ai_unavailable", status: lastStatus });
 };
+
