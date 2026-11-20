@@ -733,7 +733,7 @@ const ACT={
     const fail=m=>{if(tok!==S.scanTok||!S.scanning)return;clearTimers();S.scanning=false;render(true);toast(m)};
     try{
       const image=await shrinkImg(S.scanPhoto);
-      const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image}),signal:AbortSignal.timeout(45000)});
+      const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image}),signal:AbortSignal.timeout(55000)});
       const d=await r.json().catch(()=>({}));
       if(tok!==S.scanTok||!S.scanning)return;
       if(r.status===422)return fail('Wajah tidak terdeteksi. Coba foto lain dengan pencahayaan cukup. Kuota tidak terpakai.');
@@ -803,9 +803,6 @@ document.getElementById('reset').onclick=()=>{clearTimers();S=initial();render()
 const h=location.hash.slice(1);if(V[h])S.screen=h;
 render();
 </script>
-
-</body>
-</html>
 
 </body>
 </html>
