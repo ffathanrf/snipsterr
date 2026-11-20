@@ -264,13 +264,16 @@ const PRODUCTS={
 };
 const SCANPACKS=[[1,10000,0],[3,25000,5000],[5,40000,10000]];
 const scanLeft=()=>S.scanFree+S.scanCredits;
+const curStyles=()=>S.aiStyles||STYLES;
+const styleWhy=n=>((S.aiStyles||[]).find(x=>x.n===n)||{}).why||'';
+function shrinkImg(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>{const k=Math.min(1,768/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.85))};im.onerror=()=>rej(new Error('img'));im.src=src})}
 function stopCam(){if(S.stream){S.stream.getTracks().forEach(t=>t.stop());S.stream=null}}
 const STYLES=[{n:'Textured Crop',m:98,h:'crop'},{n:'Low Fade',m:95,h:'fade'},{n:'Side Part',m:92,h:'side'},{n:'Crew Cut',m:90,h:'crew'}];
 const NAVMAP={member:'member',beli:'profil',beliSukses:'profil',pesanan:'pesanan',tracking:'pesanan',chat:'pesanan',book:'book',jadwal:'book',bayar:'book',sukses:'book',toko:'toko',produk:'toko',ulasanProduk:'toko',keranjang:'toko',checkout:'toko',qris:'toko',suksesProduk:'toko',profil:'profil',loyalty:'profil'};
 
 function initial(){return{
   points:21450,spend:865000,scanFree:3,scanCredits:0,purchase:null,payP:'qris',homeUsed:false,reschedUsed:0,screen:'home',hist:[],tab:'berjalan',cabangFilter:'Semua',shopCat:'Semua',
-  style:'Textured Crop',barber:'andi',reviewBarber:'andi',stars:4,review:'',photo:null,scanPhoto:null,
+  style:'Textured Crop',aiStyles:null,faceShape:'Oval',faceNote:'Cocok dengan gaya clean & textured haircut',barber:'andi',reviewBarber:'andi',stars:4,review:'',photo:null,scanPhoto:null,
   bk:{mode:'cabang',svc:'tfw',home:{grooming:true,beard:true},date:'27',time:'10:00',usePoints:false,pay:'qris',source:'book'},
   aiDate:'12 Jun',aiTime:'10:00',
   cart:{pomade:{qty:1,on:true},shampoo:{qty:1,on:true}},product:'shampoo',psize:'250ml',search:'',shipPay:'qris',
@@ -376,7 +379,7 @@ V.scan=()=>{const left=scanLeft();return `${crumb('AI Face Shape Analysis')}
   ${S.camError?`<div class="card small" style="background:#fff7ed;border-color:#fed7aa;color:#9a3412;line-height:1.5"><b>Kamera belum bisa dibuka.</b> Izinkan akses kamera di browser lalu tekan "Buka Kamera", atau pakai tombol "Ambil / Unggah Foto".</div>`:''}</div>
   <div class="sticky sec">
   <div class="card flat sec">
-    <div><b style="font-size:15px">Tips Scan Wajah</b><ul class="small" style="margin:10px 0 0;padding-left:18px;line-height:1.9"><li>Lepas kacamata</li><li>Hadap kamera</li><li>Pencahayaan cukup</li></ul></div>
+    <div><b style="font-size:15px">Tips Scan Wajah</b><ul class="small" style="margin:10px 0 0;padding-left:18px;line-height:1.9"><li>Lepas kacamata</li><li>Hadap kamera</li><li>Pencahayaan cukup</li></ul><div class="xs muted" style="margin-top:10px;line-height:1.5">Foto dikirim sementara ke layanan AI (Google Gemini) hanya untuk dianalisis dan tidak disimpan oleh Snipster.</div></div>
     <button class="btn light full" data-act="${S.stream?'camOff':'camOn'}" ${S.scanning?'disabled':''}><i class="fa-solid ${S.stream?'fa-video-slash':'fa-video'}"></i> ${S.stream?'Tutup Kamera':'Buka Kamera'}</button>
     <label class="btn light full" for="scanfile" style="cursor:pointer"><i class="fa-solid fa-camera"></i> ${S.scanPhoto?'Ganti foto':'Ambil / Unggah Foto'}</label><input type="file" id="scanfile" accept="image/*" capture="user" hidden>
     ${left?`<button class="btn full" data-act="startScan" ${S.scanning?'disabled':''}>${S.scanning?'Memindai…':'Mulai Scan'}</button><span class="xs muted" style="text-align:center">Setiap scan memakai 1 kuota</span>`:`<button class="btn blue full" data-act="toPacks">Beli Paket Scan</button>`}
@@ -393,11 +396,11 @@ V.hasil=()=>`${crumb('Hasil Analisis')}
 <div class="ph"><div><h1>Hasil Analisis Wajahmu</h1><p>Pilih gaya rambut yang paling kamu suka dari rekomendasi AI.</p></div></div>
 <div class="two">
   <div class="sec">
-    <div class="grid4">${STYLES.map(s=>`<button class="style ${S.style===s.n?'on':''}" data-act="pickStyle" data-id="${s.n}"><div class="art">${hairArt(s.h,130)}</div><div class="t"><div style="font-size:14px;font-weight:700">${s.n}</div><div class="match">${s.m}% Match</div></div></button>`).join('')}</div>
+    <div class="grid4">${curStyles().map(s=>`<button class="style ${S.style===s.n?'on':''}" data-act="pickStyle" data-id="${s.n}"><div class="art">${hairArt(s.h,130)}</div><div class="t"><div style="font-size:14px;font-weight:700">${s.n}</div><div class="match">${s.m}% Match</div></div></button>`).join('')}</div>
     <p class="small muted" style="margin:0;line-height:1.6">Skor kecocokan dihitung dari proporsi dahi, tulang pipi, dan rahang hasil scan, dikombinasikan dengan tren gaya terkini.</p>
   </div>
-  <div class="sticky sec"><div class="result"><span class="xs" style="opacity:.7">Bentuk Wajah</span><b>OVAL FACE</b><span class="small" style="opacity:.85">Cocok dengan gaya clean &amp; textured haircut</span></div>
-  <div class="card flat"><div class="xs muted">Gaya dipilih</div><b style="font-size:16px">${S.style}</b></div>
+  <div class="sticky sec"><div class="result"><span class="xs" style="opacity:.7">Bentuk Wajah</span><b>${esc(S.faceShape.toUpperCase())} FACE</b><span class="small" style="opacity:.85">${esc(S.faceNote)}</span></div>
+  <div class="card flat"><div class="xs muted">Gaya dipilih</div><b style="font-size:16px">${S.style}</b>${styleWhy(S.style)?`<div class="xs muted" style="margin-top:6px;line-height:1.5">${esc(styleWhy(S.style))}</div>`:''}</div>
   <button class="btn full" data-go="match">Book Barber dengan Style Ini</button></div>
 </div>`;
 
@@ -720,10 +723,31 @@ const ACT={
   payP:id=>{S.payP=id;render(true)},
   payPurchase:()=>{const k=S.purchase;k.paidWith=S.payP;if(S.payP==='poin'){if(S.points<k.price)return;S.points-=k.price;S.ptlog=[['Bayar paket '+k.qty+'x scan',-k.price]].concat(S.ptlog)}
     if(k.type==='scan')S.scanCredits+=k.qty;else{S.points+=k.qty;S.ptlog=[['Beli '+pts(k.qty)+' poin',k.qty]].concat(S.ptlog)}S.hist=['home'];go('beliSukses',false)},
-  startScan:()=>{if(scanLeft()<=0){toast('Kuota scan habis. Beli paket untuk lanjut.');ACT.toPacks();return}
+  startScan:async()=>{
+    if(S.scanning)return;
+    if(scanLeft()<=0){toast('Kuota scan habis. Beli paket untuk lanjut.');ACT.toPacks();return}
     if(S.stream){const v=document.getElementById('camvideo');if(v&&v.videoWidth){const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;const x=c.getContext('2d');x.translate(c.width,0);x.scale(-1,1);x.drawImage(v,0,0);S.scanPhoto=c.toDataURL('image/jpeg',.85)}stopCam()}
-    if(S.scanFree>0)S.scanFree--;else S.scanCredits--;
-    S.scanning=true;render(true);let p=0;timers.push(setInterval(()=>{p+=3;const b=document.getElementById('scanbar');if(b)b.style.width=p+'%';if(p>=100){clearTimers();S.scanning=false;go('hasil')}},80))},
+    if(!S.scanPhoto){toast('Ambil atau unggah foto wajah dulu ya');render(true);return}
+    const tok=S.scanTok=(S.scanTok||0)+1;
+    S.scanning=true;render(true);
+    let p=0;timers.push(setInterval(()=>{p=Math.min(p+(p<60?3:p<85?1:.2),92);const b=document.getElementById('scanbar');if(b)b.style.width=p+'%'},80));
+    const fail=m=>{if(tok!==S.scanTok||!S.scanning)return;clearTimers();S.scanning=false;render(true);toast(m)};
+    try{
+      const image=await shrinkImg(S.scanPhoto);
+      const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image})});
+      const d=await r.json().catch(()=>({}));
+      if(tok!==S.scanTok||!S.scanning)return;
+      if(r.status===422)return fail('Wajah tidak terdeteksi. Coba foto lain dengan pencahayaan cukup. Kuota tidak terpakai.');
+      if(r.status===429)return fail('Layanan AI sedang ramai. Coba lagi sebentar lagi. Kuota tidak terpakai.');
+      if(!r.ok||!d.result)return fail('Analisis gagal. Coba lagi nanti. Kuota tidak terpakai.');
+      const R=d.result;
+      S.aiStyles=R.styles.map(x=>({n:x.name,m:x.match,why:x.why,h:(STYLES.find(t=>t.n===x.name)||{}).h||'crop'}));
+      S.style=S.aiStyles[0].n;S.faceShape=R.faceShape;S.faceNote=R.note||'Rekomendasi disesuaikan dengan bentuk wajahmu';
+      if(S.scanFree>0)S.scanFree--;else S.scanCredits--;
+      clearTimers();const b=document.getElementById('scanbar');if(b)b.style.width='100%';
+      timers.push(setTimeout(()=>go('hasil'),250));
+    }catch(e){fail('Tidak bisa terhubung ke AI. Cek koneksi internetmu. Kuota tidak terpakai.')}
+  },
   pickStyle:id=>{S.style=id;render(true)},
   selBarber:id=>{S.barber=id;render(true)},
   toJadwal:()=>{S.bk.source='ai';go('jadwal')},
