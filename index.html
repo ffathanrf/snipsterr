@@ -733,11 +733,11 @@ const ACT={
     const fail=m=>{if(tok!==S.scanTok||!S.scanning)return;clearTimers();S.scanning=false;render(true);toast(m)};
     try{
       const image=await shrinkImg(S.scanPhoto);
-      const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image}),signal:AbortSignal.timeout(55000)});
+      const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image}),signal:AbortSignal.timeout(58000)});
       const d=await r.json().catch(()=>({}));
       if(tok!==S.scanTok||!S.scanning)return;
       if(r.status===422)return fail('Wajah tidak terdeteksi. Coba foto lain dengan pencahayaan cukup. Kuota tidak terpakai.');
-      if(r.status===429)return fail('Layanan AI sedang ramai. Coba lagi sebentar lagi. Kuota tidak terpakai.');
+      if(r.status===429||r.status===503)return fail('Layanan AI Google sedang penuh. Tunggu 1-2 menit lalu coba lagi. Kuota tidak terpakai.');
       if(r.status===504)return fail('Analisis terlalu lama. Coba lagi. Kuota tidak terpakai.');
       if(!r.ok||!d.result)return fail('Analisis gagal. Coba lagi nanti. Kuota tidak terpakai.');
       const R=d.result;
