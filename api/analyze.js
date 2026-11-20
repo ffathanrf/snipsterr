@@ -2,7 +2,7 @@
 // API key HANYA dibaca dari Environment Variable (GEMINI_API_KEY), tidak pernah ditaruh di frontend.
 
 const MODELS = [
-  ...new Set([process.env.GEMINI_MODEL, "gemini-4-hydrogen", "gemini-3.8-flash"].filter(Boolean)),
+  ...new Set([process.env.GEMINI_MODEL, "gemini-3.8-flash", "gemini-4-hydrogen"].filter(Boolean)),
 ];
 
 const STYLE_NAMES = ["Textured Crop", "Low Fade", "Side Part", "Crew Cut"];
@@ -81,7 +81,7 @@ module.exports = async function handler(req, res) {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
       body: makeBody(fast),
-      signal: AbortSignal.timeout(30000), // jangan menggantung lebih dari 30 detik
+      signal: AbortSignal.timeout(20000), // maks 20 detik per model
     });
 
   let lastStatus = 502;
@@ -104,9 +104,9 @@ module.exports = async function handler(req, res) {
     } catch (e) {
       console.error("analyze failed", e && e.name, e && e.message);
       lastStatus = e && e.name === "TimeoutError" ? 504 : 502;
+      if (e && e.name === "TimeoutError") continue; // model lambat -> coba model berikutnya
       break;
     }
   }
   return res.status(502).json({ error: "ai_unavailable", status: lastStatus });
 };
-
