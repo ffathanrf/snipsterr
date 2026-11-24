@@ -251,18 +251,51 @@ footer .wrap{padding-block:22px;display:flex;justify-content:space-between;gap:1
 
 <script>
 const rp=n=>(n<0?'-':'')+'Rp '+Math.abs(n).toLocaleString('id-ID');
-const BARBERS={
-  andi:{id:'andi',name:'Andi Saputra',nick:'The Fade Master',spec:'Ahli fade & textured haircut',style:'The Fade Master',req:'Undercut, Pompadour',cabang:'Kemang',rating:4.9,reviews:120,total:328,color:'#7c3f2c',match:98},
-  rian:{id:'rian',name:'Rian Hidayat',nick:'The Specialist',spec:'Modern & Korean style',style:'Korean Textured Fade',req:'Undercut, Textured Fade',cabang:'BSD City',rating:4.9,reviews:210,total:210,color:'#3b6e8f',match:95},
-  bima:{id:'bima',name:'Bima Satya',nick:'Classic Barber',spec:'Classic & gentlemen cut',style:'Classic Pompadour',req:'Pompadour, Side Part',cabang:'Senopati',rating:4.8,reviews:95,total:95,color:'#9d3d5a',match:92}
-};
+/* Barbershop di wilayah Bekasi (nama, alamat, dan jam buka dari data peta publik; cek ulang sebelum dipakai). */
+const mk=(id,name,area,addr,hours,color)=>({id,name,nick:area,spec:'Barbershop pria',style:'Barbershop pria',req:'',cabang:area,addr,hours,color,rating:null,reviews:0,total:0,match:null});
+const BARBERS=Object.fromEntries([
+  mk('captain_sb','Captain Barbershop Summarecon Bekasi','Bekasi Utara','Ruko Emerald Blok UE No. 06, Jl. Bulevar Selatan, Summarecon Bekasi','10.00 - 21.00','#1e3a8a'),
+  mk('captain_sb2','Captain Barbershop Summarecon Bekasi 2','Bekasi Utara','Ruko Crystal Blok ND20, Summarecon Bekasi','10.00 - 21.00','#1e40af'),
+  mk('shortcut','Short CUT Barbershop','Bekasi Utara','Mall Summarecon Bekasi lt. 1, Jl. Bulevar Ahmad Yani No. 140 A','10.00 - 22.00','#0f766e'),
+  mk('marcos',"Marco's Chop Shop Barbershop Summarecon Mall Bekasi 2",'Bekasi Utara','Jl. Boulevard Ahmad Yani Blok M, Summarecon Bekasi','10.00 - 22.00','#7c2d12'),
+  mk('rai','Rai Barbershop Summarecon','Bekasi Utara','Summarecon Bekasi, Marga Mulya','10.00 - 21.00','#4338ca'),
+  mk('captain_hi','Captain Barbershop Harapan Indah','Medan Satria','Ruko Boulevard Hijau Blok C5 No. 20, Harapan Indah','10.00 - 21.00','#1d4ed8'),
+  mk('captain_at','Captain Barbershop Harapan Indah Asia Tropis','Medan Satria','Ruko Asia Tropis Blok AT 17 No. 19, Jl. Harapan Indah Boulevard','10.00 - 21.00','#2563eb'),
+  mk('haircules','Haircules Prime Barbershop Harapan Indah','Medan Satria','Ruko Boulevard Hijau Blok A3 No. 31, Harapan Indah','10.00 - 21.00','#9d3d5a'),
+  mk('narasi','Narasi Barber Studio Harapan Indah','Medan Satria','Jl. Pejuang, Harapan Indah','10.30 - 21.30','#6b4fa0'),
+  mk('ajudan','The Ajudan Barbershop Harapan Indah','Medan Satria','Jl. Harapan Indah Raya Blok CA No. 14B','10.00 - 21.00','#475569'),
+  mk('captain_gg','Captain Barbershop Grand Galaxy','Bekasi Selatan','Jl. Boulevard Raya No. 17, Ruko RGA, Jaka Setia','10.00 - 21.00','#1e3a8a'),
+  mk('hairplow','HairPlow Barbershop Galaxy','Bekasi Selatan','Jl. Taman Aster No. 9 Blok M, Jaka Setia','10.00 - 22.00','#b45309'),
+  mk('barberroom','Barber Room Galaxy','Bekasi Selatan','Jl. Pulo Ribung Raya Blok AR 1 No. 42, Jaka Setia','10.00 - 21.00','#334155'),
+  mk('houseofbarber','House Of Barber Galaxy','Bekasi Selatan','Jl. Taman Aster No. 13 Blok L4, Jaka Setia','11.00 - 22.00','#7c3f2c'),
+  mk('barberpedia','Barberpedia Galaxy Bekasi','Bekasi Selatan','Ruko Galaxy Blok RGB.69, Jl. Boulevard Raya, Jaka Setia','10.00 - 21.00','#0e7490'),
+  mk('captain_kb','Captain Barbershop Kota Bintang','Bekasi Barat','Jl. KH. Moh. Tambih, Jakasampurna','10.00 - 21.00','#2f6f5e'),
+  mk('captain_gw','Captain Barbershop Grand Wisata','Tambun Selatan','Jl. Festive Garden No. AA 35, Grand Wisata, Lambangsari','10.00 - 21.00','#1e3a8a')
+].map(b=>[b.id,b]));
+const CABANGS=Object.fromEntries(Object.values(BARBERS).map(b=>[b.id,{id:b.id,short:b.cabang,name:b.name,addr:b.addr,hours:b.hours,barber:b.id}]));
+const AREAS=[...new Set(Object.values(BARBERS).map(b=>b.cabang))];
+const HOMEB={id:'homeb',name:'Rian Hidayat',color:'#3b6e8f'}; /* mitra home service Snipster (contoh) */
+const HOME_SHOPS=['captain_sb','captain_hi','captain_gg'];
+const cabangOf=bid=>CABANGS[bid];
+const rateTxt=b=>b.rating?`⭐ ${b.rating} • ${b.reviews} Reviews`:'Baru di Snipster';
 const PRODUCTS={
-  pomade:{id:'pomade',name:'Matte Pomade',cat:'Styling',size:'100 gram',variants:['50gr','100gr'],price:85000,rating:4.9,sold:150,reviews:150,desc:'Pomade matte dengan hold kuat dan hasil natural tanpa kilap. Mudah dicuci dan cocok untuk gaya textured.',ing:['Beeswax alami','Kaolin clay','Minyak argan']},
-  oil:{id:'oil',name:'Hair Tonic Oil',cat:'Perawatan',size:'50 ml',variants:['50ml','100ml'],price:120000,rating:4.8,sold:89,reviews:89,desc:'Tonik rambut untuk menutrisi kulit kepala dan membuat rambut lebih sehat dan berkilau alami.',ing:['Minyak kemiri','Ekstrak urang-aring','Vitamin E']},
-  shampoo:{id:'shampoo',name:'Hair Growth Shampoo',cat:'Perawatan',size:'250 ml',variants:['100ml','250ml'],price:120000,rating:4.8,sold:89,reviews:120,desc:'Shampoo khusus dari Snipster yang diformulasikan untuk merangsang pertumbuhan rambut, mencegah kerontokan, dan memperkuat akar rambut.',ing:['Ekstrak Ginseng Premium','Aloe Vera','Vitamin B5 (Panthenol)']},
-  clay:{id:'clay',name:'Hair Clay',cat:'Styling',size:'50 ml',variants:['50ml'],price:75000,rating:4.7,sold:64,reviews:64,desc:'Clay dengan tekstur ringan untuk tampilan messy dan volume ekstra sepanjang hari.',ing:['Bentonite clay','Lanolin','Ekstrak teh hijau']}
+  pomade:{id:'pomade',name:'Water-Based Pomade',cat:'Styling',size:'100 gram',variants:['50gr','100gr'],price:89000,rating:4.8,sold:212,reviews:168,stock:24,desc:'Pomade berbasis air dengan hold kuat dan kilap sedang. Mudah dibilas dengan air biasa, cocok untuk pompadour, side part, dan slick back.',ing:['Formula berbasis air, mudah dibilas','Hold kuat dengan kilap sedang','Aroma khas barbershop']},
+  clay:{id:'clay',name:'Matte Hair Clay',cat:'Styling',size:'75 gram',variants:['75gr'],price:95000,rating:4.7,sold:164,reviews:121,stock:18,desc:'Clay bertekstur ringan dengan hasil matte dan hold kuat. Cocok untuk textured crop dan messy look dengan volume natural.',ing:['Hold kuat, finish matte','Tidak lengket di tangan','Bisa dibilas dengan shampoo biasa']},
+  powder:{id:'powder',name:'Volume Hair Powder',cat:'Styling',size:'20 gram',variants:['20gr'],price:69000,rating:4.6,sold:97,reviews:71,stock:31,desc:'Bubuk styling ringan untuk menambah volume dan tekstur di akar rambut tanpa rasa berat. Taburkan, lalu acak dengan jari.',ing:['Volume instan di akar rambut','Finish matte natural','Ukuran praktis dibawa bepergian']},
+  spray:{id:'spray',name:'Sea Salt Texture Spray',cat:'Styling',size:'150 ml',variants:['150ml'],price:79000,rating:4.7,sold:88,reviews:64,stock:40,desc:'Spray bertekstur untuk tampilan messy natural ala pantai. Semprot ke rambut setengah basah atau kering, lalu bentuk sesuai gaya.',ing:['Tekstur natural, tidak kaku','Cocok dipakai sebelum clay','Mudah disemprot merata']},
+  shampoo:{id:'shampoo',name:'Cooling Mint Shampoo',cat:'Perawatan',size:'250 ml',variants:['100ml','250ml'],price:89000,rating:4.8,sold:189,reviews:142,stock:52,desc:'Shampoo harian dengan sensasi dingin mint yang membersihkan sisa produk styling dan membuat kulit kepala terasa segar.',ing:['Sensasi dingin mint','Membersihkan sisa pomade dan clay','Nyaman untuk pemakaian harian']},
+  oil:{id:'oil',name:'Daily Hair Tonic',cat:'Perawatan',size:'100 ml',variants:['50ml','100ml'],price:75000,rating:4.7,sold:91,reviews:67,stock:22,desc:'Tonik rambut ringan untuk menjaga rambut dan kulit kepala tetap terasa segar dan terawat. Pijatkan tipis di kulit kepala setelah keramas.',ing:['Tekstur ringan, tidak lengket','Aroma segar','Praktis dipakai setiap hari']},
+  beardoil:{id:'beardoil',name:'Beard Oil',cat:'Jenggot',size:'30 ml',variants:['30ml'],price:85000,rating:4.8,sold:73,reviews:52,stock:17,desc:'Minyak jenggot beraroma kayu yang lembut, membuat jenggot terasa lebih halus, rapi, dan tidak kering.',ing:['Aroma kayu yang lembut','Jenggot terasa lebih halus','Botol tetes, mudah dipakai']},
+  beardbalm:{id:'beardbalm',name:'Beard Balm',cat:'Jenggot',size:'60 gram',variants:['60gr'],price:90000,rating:4.6,sold:41,reviews:29,stock:12,desc:'Balm untuk membentuk dan menjaga jenggot tetap rapi sepanjang hari dengan hold ringan.',ing:['Hold ringan untuk membentuk jenggot','Tekstur lembut','Kemasan kaleng praktis']},
+  comb:{id:'comb',name:'Sisir Saku Kayu',cat:'Aksesori',size:'1 pcs',variants:['1pcs'],price:39000,rating:4.9,sold:130,reviews:96,stock:60,desc:'Sisir saku dari kayu dengan gigi rapat yang halus di kulit kepala dan minim listrik statis. Muat di dompet atau saku celana.',ing:['Bahan kayu, halus di kulit kepala','Minim listrik statis','Ukuran saku']},
+  kit:{id:'kit',name:'Starter Grooming Kit',cat:'Paket',size:'3 item',variants:['3 item'],price:189000,old:217000,rating:4.9,sold:58,reviews:41,stock:9,desc:'Paket hemat berisi Water-Based Pomade 100gr, Cooling Mint Shampoo 250ml, dan Sisir Saku Kayu. Cocok untuk memulai rutinitas grooming.',ing:['Water-Based Pomade 100gr','Cooling Mint Shampoo 250ml','Sisir Saku Kayu']}
 };
+const SHOP_CATS=['Semua','Styling','Perawatan','Jenggot','Aksesori','Paket'];
+const HOME_PRODUCTS=['pomade','clay','shampoo','beardoil'];
 const SCANPACKS=[[1,10000,0],[3,25000,5000],[5,40000,10000]];
+const DAYN=['MIN','SEN','SEL','RAB','KAM','JUM','SAB'],MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const DAYS=(()=>{const a=[],t=new Date();t.setHours(12,0,0,0);for(let i=1;i<=6;i++){const x=new Date(t);x.setDate(t.getDate()+i);a.push({key:x.toISOString().slice(0,10),dn:DAYN[x.getDay()],d:x.getDate(),m:MON[x.getMonth()],y:x.getFullYear()})}return a})();
+const dayLabel=k=>{const d=DAYS.find(x=>x.key===k)||DAYS[0];return d.d+' '+d.m+' '+d.y};
 const scanLeft=()=>S.scanFree+S.scanCredits;
 const curStyles=()=>S.aiStyles||STYLES;
 const styleWhy=n=>((S.aiStyles||[]).find(x=>x.n===n)||{}).why||'';
@@ -272,10 +305,10 @@ const STYLES=[{n:'Textured Crop',m:98,h:'crop'},{n:'Low Fade',m:95,h:'fade'},{n:
 const NAVMAP={member:'member',beli:'profil',beliSukses:'profil',pesanan:'pesanan',tracking:'pesanan',chat:'pesanan',book:'book',jadwal:'book',bayar:'book',sukses:'book',toko:'toko',produk:'toko',ulasanProduk:'toko',keranjang:'toko',checkout:'toko',qris:'toko',suksesProduk:'toko',profil:'profil',loyalty:'profil'};
 
 function initial(){return{
-  points:21450,spend:865000,scanFree:3,scanCredits:0,purchase:null,payP:'qris',homeUsed:false,reschedUsed:0,screen:'home',hist:[],tab:'berjalan',cabangFilter:'Semua',shopCat:'Semua',
-  style:'Textured Crop',aiStyles:null,faceShape:'Oval',faceNote:'Cocok dengan gaya clean & textured haircut',barber:'andi',reviewBarber:'andi',stars:4,review:'',photo:null,scanPhoto:null,
-  bk:{mode:'cabang',svc:'tfw',home:{grooming:true,beard:true},date:'27',time:'10:00',usePoints:false,pay:'qris',source:'book'},
-  aiDate:'12 Jun',aiTime:'10:00',
+  points:21450,spend:865000,scanFree:3,scanCredits:0,purchase:null,payP:'qris',homeUsed:false,reschedUsed:0,screen:'home',hist:[],tab:'berjalan',cabangFilter:'Semua',bkArea:'Bekasi Utara',shopCat:'Semua',
+  style:'Textured Crop',aiStyles:null,faceShape:'Oval',faceNote:'Cocok dengan gaya clean & textured haircut',barber:'captain_sb',reviewBarber:'captain_sb',stars:4,review:'',photo:null,scanPhoto:null,
+  bk:{mode:'cabang',cabang:'captain_sb',svc:'tfw',home:{grooming:true,beard:true},date:DAYS[0].key,time:'10:00',usePoints:false,pay:'qris',source:'book'},
+  aiDate:DAYS[0].key,aiTime:'10:00',
   cart:{pomade:{qty:1,on:true},shampoo:{qty:1,on:true}},product:'shampoo',psize:'250ml',search:'',shipPay:'qris',
   upcoming:[],chat:[{me:true,t:'Halo mas Rian, untuk patokan rumahnya pagar warna hitam ya.',at:'10:45'},{me:false,t:'Baik mas, saya sudah masuk perumahan. 2 menit lagi sampai.',at:'10:47'},{me:true,t:'Oke mas siap.',at:'10:48'}],
   eta:8,lastBooking:null,lastOrder:null,ptlog:[]
@@ -285,14 +318,23 @@ const clearTimers=()=>{timers.forEach(t=>{clearInterval(t);clearTimeout(t)});tim
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- art ---------- */
-function av(b,size=48){b=BARBERS[b]||b;const ini=b.name.split(' ').map(w=>w[0]).join('');return `<div class="av" style="width:${size}px;height:${size}px;background:${b.color};font-size:${size*.34}px">${ini}</div>`}
+function av(b,size=48){b=BARBERS[b]||b;const ini=b.name.split(' ').map(w=>w[0]).join('').slice(0,2);return `<div class="av" style="width:${size}px;height:${size}px;background:${b.color};font-size:${size*.34}px">${ini}</div>`}
 function userAv(size,name,color){const ini=name.replace(/[^A-Za-z ]/g,'').split(' ').map(w=>w[0]).join('').slice(0,2);return `<div class="av" style="width:${size}px;height:${size}px;background:${color};font-size:${size*.36}px">${ini}</div>`}
 function prodArt(id,s=1){
   const w=80*s,h=80*s;
-  if(id==='pomade')return `<svg width="${w}" height="${h}" viewBox="0 0 80 80" aria-hidden="true"><ellipse cx="40" cy="58" rx="30" ry="9" fill="#111"/><rect x="10" y="38" width="60" height="20" fill="#1a1a1a"/><ellipse cx="40" cy="38" rx="30" ry="9" fill="#2b2b2b"/><ellipse cx="40" cy="38" rx="22" ry="5.5" fill="#3a3a3a"/><text x="40" y="51" font-size="7" text-anchor="middle" fill="#e7d8a6" font-family="sans-serif" font-weight="700">POMADE</text></svg>`;
-  if(id==='oil')return `<svg width="${w}" height="${h}" viewBox="0 0 80 80" aria-hidden="true"><rect x="34" y="4" width="12" height="12" rx="2" fill="#222"/><rect x="31" y="15" width="18" height="6" fill="#333"/><rect x="26" y="21" width="28" height="55" rx="5" fill="#2e2a20"/><rect x="29" y="34" width="22" height="26" rx="2" fill="#d9d2bd"/><rect x="33" y="40" width="14" height="2" fill="#6b5f43"/><rect x="33" y="45" width="10" height="2" fill="#6b5f43"/></svg>`;
-  if(id==='shampoo')return `<svg width="${w}" height="${h}" viewBox="0 0 80 80" aria-hidden="true"><rect x="37" y="2" width="16" height="4" rx="2" fill="#bbb"/><rect x="38" y="5" width="4" height="10" fill="#ccc"/><rect x="33" y="14" width="14" height="8" rx="2" fill="#e5e7eb"/><rect x="24" y="21" width="32" height="56" rx="8" fill="#f3f4f6" stroke="#d1d5db"/><rect x="24" y="36" width="32" height="28" fill="#14b8a6"/><path d="M40 40l4 8-4 8-4-8z" fill="#fff" opacity=".85"/></svg>`;
-  return `<svg width="${w}" height="${h}" viewBox="0 0 80 80" aria-hidden="true"><ellipse cx="40" cy="58" rx="28" ry="9" fill="#0b1220"/><rect x="12" y="38" width="56" height="20" fill="#111827"/><ellipse cx="40" cy="38" rx="28" ry="9" fill="#1e293b"/><circle cx="40" cy="38" r="7" fill="#38bdf8" opacity=".8"/><text x="40" y="52" font-size="7" text-anchor="middle" fill="#7dd3fc" font-family="sans-serif" font-weight="700">HAIR CLAY</text></svg>`;
+  const A={
+   pomade:`<ellipse cx="40" cy="58" rx="30" ry="9" fill="#111"/><rect x="10" y="38" width="60" height="20" fill="#1a1a1a"/><ellipse cx="40" cy="38" rx="30" ry="9" fill="#2b2b2b"/><ellipse cx="40" cy="38" rx="22" ry="5.5" fill="#3a3a3a"/><text x="40" y="51" font-size="7" text-anchor="middle" fill="#e7d8a6" font-family="sans-serif" font-weight="700">POMADE</text>`,
+   clay:`<ellipse cx="40" cy="58" rx="28" ry="9" fill="#0b1220"/><rect x="12" y="38" width="56" height="20" fill="#111827"/><ellipse cx="40" cy="38" rx="28" ry="9" fill="#1e293b"/><circle cx="40" cy="38" r="7" fill="#38bdf8" opacity=".8"/><text x="40" y="52" font-size="7" text-anchor="middle" fill="#7dd3fc" font-family="sans-serif" font-weight="700">HAIR CLAY</text>`,
+   powder:`<rect x="26" y="26" width="28" height="48" rx="6" fill="#1f2937"/><rect x="30" y="12" width="20" height="14" rx="3" fill="#9ca3af"/><circle cx="36" cy="19" r="1.4" fill="#4b5563"/><circle cx="40" cy="19" r="1.4" fill="#4b5563"/><circle cx="44" cy="19" r="1.4" fill="#4b5563"/><rect x="29" y="40" width="22" height="22" rx="2" fill="#f3f4f6"/><text x="40" y="53" font-size="4.6" text-anchor="middle" fill="#1f2937" font-family="sans-serif" font-weight="800">POWDER</text>`,
+   spray:`<rect x="34" y="22" width="12" height="8" fill="#374151"/><rect x="30" y="11" width="18" height="11" rx="2" fill="#111827"/><rect x="44" y="13" width="12" height="4" rx="1" fill="#111827"/><rect x="26" y="30" width="28" height="46" rx="6" fill="#38bdf8"/><rect x="29" y="42" width="22" height="22" rx="2" fill="#fff"/><text x="40" y="52" font-size="5" text-anchor="middle" fill="#0369a1" font-family="sans-serif" font-weight="800">SEA SALT</text><text x="40" y="59" font-size="4.5" text-anchor="middle" fill="#0369a1" font-family="sans-serif">SPRAY</text>`,
+   shampoo:`<rect x="37" y="2" width="16" height="4" rx="2" fill="#bbb"/><rect x="38" y="5" width="4" height="10" fill="#ccc"/><rect x="33" y="14" width="14" height="8" rx="2" fill="#e5e7eb"/><rect x="24" y="21" width="32" height="56" rx="8" fill="#f3f4f6" stroke="#d1d5db"/><rect x="24" y="36" width="32" height="28" fill="#14b8a6"/><path d="M40 40l4 8-4 8-4-8z" fill="#fff" opacity=".85"/>`,
+   oil:`<rect x="34" y="4" width="12" height="12" rx="2" fill="#222"/><rect x="31" y="15" width="18" height="6" fill="#333"/><rect x="26" y="21" width="28" height="55" rx="5" fill="#2e2a20"/><rect x="29" y="34" width="22" height="26" rx="2" fill="#d9d2bd"/><rect x="33" y="40" width="14" height="2" fill="#6b5f43"/><rect x="33" y="45" width="10" height="2" fill="#6b5f43"/>`,
+   beardoil:`<ellipse cx="40" cy="12" rx="6" ry="9" fill="#1f2937"/><rect x="35" y="20" width="10" height="12" fill="#111"/><rect x="26" y="32" width="28" height="44" rx="7" fill="#92400e"/><rect x="29" y="44" width="22" height="22" rx="2" fill="#fef3c7"/><text x="40" y="54" font-size="5" text-anchor="middle" fill="#92400e" font-family="sans-serif" font-weight="800">BEARD</text><text x="40" y="61" font-size="5" text-anchor="middle" fill="#92400e" font-family="sans-serif" font-weight="800">OIL</text>`,
+   beardbalm:`<ellipse cx="40" cy="58" rx="28" ry="9" fill="#78350f"/><rect x="12" y="40" width="56" height="18" fill="#92400e"/><ellipse cx="40" cy="40" rx="28" ry="9" fill="#b45309"/><ellipse cx="40" cy="40" rx="20" ry="5" fill="#d97706"/><text x="40" y="53" font-size="7" text-anchor="middle" fill="#fef3c7" font-family="sans-serif" font-weight="700">BALM</text>`,
+   comb:`<rect x="8" y="26" width="64" height="14" rx="4" fill="#a16207"/><rect x="8" y="26" width="64" height="5" rx="3" fill="#ca8a04"/>${[12,17,22,27,32,37,42,47,52,57,62,67].map(x=>`<rect x="${x}" y="40" width="2.4" height="16" rx="1" fill="#a16207"/>`).join('')}`,
+   kit:`<rect x="10" y="32" width="60" height="40" rx="3" fill="#1e3a8a"/><rect x="7" y="22" width="66" height="13" rx="3" fill="#2563eb"/><rect x="36" y="22" width="8" height="50" fill="#fbbf24"/><text x="23" y="56" font-size="7" text-anchor="middle" fill="#dbeafe" font-family="sans-serif" font-weight="800">KIT</text>`
+  };
+  return `<svg width="${w}" height="${h}" viewBox="0 0 80 80" aria-hidden="true">${A[id]||A.pomade}</svg>`;
 }
 function hairArt(kind,h=110){
   const hair={crop:'M24 44c0-16 10-26 26-26s26 10 26 26c-4-6-8-8-12-6-4-5-10-6-14-3-5-3-11-3-14 0-5-2-9 2-12 9z',fade:'M25 46c0-17 10-27 25-27s25 10 25 27c-2-6-6-10-11-12-9-3-19-3-28 0-5 2-9 6-11 12z',side:'M24 46c-1-18 10-28 27-28 15 0 25 9 25 24-8-10-20-14-34-12 4 2 4 6 2 8-8 0-14 3-20 8z',crew:'M25 44c0-15 10-24 25-24s25 9 25 24c-6-4-14-6-25-6s-19 2-25 6z'}[kind];
@@ -355,20 +397,20 @@ V.home=()=>`
     <div class="faces">${STYLES.slice(0,3).map(s=>`<div class="face"><div class="art">${hairArt(s.h,90)}</div><b>${s.n}</b><span>${s.m}% Match</span></div>`).join('')}</div>
   </section>
   <section class="grid4">
-    <button class="tile" data-go="barber"><span class="ic" style="background:var(--soft);color:var(--ink)"><i class="fa-solid fa-scissors"></i></span><span><b>Pilih Barber</b><span class="xs" style="color:var(--faint)">Lihat Barber</span></span></button>
+    <button class="tile" data-go="barber"><span class="ic" style="background:var(--soft);color:var(--ink)"><i class="fa-solid fa-scissors"></i></span><span><b>Pilih Barbershop</b><span class="xs" style="color:var(--faint)">Lihat Barbershop</span></span></button>
     <button class="tile" data-act="bookHome"><span class="ic" style="background:#eef2ff;color:#4f46e5"><i class="fa-solid fa-motorcycle"></i></span><span><b>Home Service</b><span class="xs" style="color:#22c55e;font-weight:700">Tersedia Sekarang</span></span></button>
     <button class="tile" data-act="bookCabang"><span class="ic" style="background:var(--blue-soft);color:var(--blue)"><i class="fa-solid fa-calendar-check"></i></span><span><b>Booking Cabang</b><span class="xs muted">Tanpa antre</span></span></button>
     <button class="tile" data-go="loyalty"><span class="ic" style="background:var(--amber-bg);color:var(--amber-ink)"><i class="fa-solid fa-coins"></i></span><span><b>Poin Saya</b><span class="xs muted num">${S.points.toLocaleString('id-ID')} poin</span></span></button>
   </section>
-  <section class="sec"><div class="sec-h"><h2>Smart Barber Match</h2><button class="link" data-go="barber">Lihat Semua</button></div>
-    <div class="grid3">${['andi','rian','bima'].map((id,i)=>{const b=BARBERS[id];return `<div class="card bcard" style="${i===0?'border-color:var(--blue-line)':''}"><div class="top-r">${av(id,56)}<div style="flex:1;min-width:0"><b style="font-size:15px">${b.name.split(' ')[0]} "${b.nick}"</b><div class="xs muted">Cocok dengan request: ${b.req}</div><div class="xs" style="margin-top:4px"><i class="fa-solid fa-star star"></i> ${b.rating} (${b.reviews} Review)</div></div></div><div class="spread"><span class="xs muted"><i class="fa-solid fa-location-dot" style="color:var(--red)"></i> ${b.cabang}</span><button class="btn sm" style="background:#000" data-act="pickBarber" data-id="${id}">Pilih</button></div></div>`}).join('')}</div>
+  <section class="sec"><div class="sec-h"><h2>Barbershop di Bekasi</h2><button class="link" data-go="barber">Lihat Semua</button></div>
+    <div class="grid3">${HOME_SHOPS.map((id,i)=>{const b=BARBERS[id];return `<div class="card bcard" style="${i===0?'border-color:var(--blue-line)':''}"><div class="top-r">${av(id,56)}<div style="flex:1;min-width:0"><b style="font-size:15px">${b.name}</b><div class="xs muted">${b.addr}</div><div class="xs" style="margin-top:4px">${rateTxt(b)}</div></div></div><div class="spread"><span class="xs muted"><i class="fa-solid fa-location-dot" style="color:var(--red)"></i> ${b.cabang}</span><button class="btn sm" style="background:#000" data-act="pickBarber" data-id="${id}">Pilih</button></div></div>`}).join('')}</div>
   </section>
   <section class="sec"><div class="sec-h"><h2>Produk Rambut (Cabang Terdekat)</h2><button class="link" data-nav="toko">Ke Toko</button></div>
-    <div class="grid4">${Object.keys(PRODUCTS).map(prodCard).join('')}</div>
+    <div class="grid4">${HOME_PRODUCTS.map(prodCard).join('')}</div>
   </section>
 </div>`;
 
-function prodCard(id){const p=PRODUCTS[id];return `<div class="prod"><button data-act="openProduct" data-id="${id}" style="display:flex;flex-direction:column;gap:8px;text-align:left"><div class="art" style="width:100%">${prodArt(id,1.7)}</div><b style="font-size:14px">${id==='pomade'&&S.screen==='home'?'Premium Pomade':p.name}</b><span class="xs muted">${p.size}</span></button><div class="spread"><div><div class="price num">${rp(p.price)}</div><div class="xs muted"><span class="star">★</span> ${p.rating} | ${p.sold} Terjual</div></div><button class="addbtn" data-act="addCart" data-id="${id}" aria-label="Tambah ${p.name} ke keranjang"><i class="fa-solid fa-plus"></i></button></div></div>`}
+function prodCard(id){const p=PRODUCTS[id];return `<div class="prod"><button data-act="openProduct" data-id="${id}" style="display:flex;flex-direction:column;gap:8px;text-align:left"><div class="art" style="width:100%">${prodArt(id,1.7)}</div><b style="font-size:14px">${p.name}</b><span class="xs muted">${p.size}</span></button><div class="spread"><div><div class="price num">${rp(p.price)}${p.old?` <s class="xs muted" style="font-weight:500">${rp(p.old)}</s>`:''}</div><div class="xs muted"><span class="star">★</span> ${p.rating} | ${p.sold} Terjual</div></div><button class="addbtn" data-act="addCart" data-id="${id}" aria-label="Tambah ${p.name} ke keranjang"><i class="fa-solid fa-plus"></i></button></div></div>`}
 
 V.scan=()=>{const left=scanLeft();return `${crumb('AI Face Shape Analysis')}
 <div class="ph"><div><h1>Face Scan</h1><p>Buka kamera atau ambil foto, posisikan wajah di dalam lingkaran, lalu mulai scan.</p></div>
@@ -379,7 +421,7 @@ V.scan=()=>{const left=scanLeft();return `${crumb('AI Face Shape Analysis')}
   ${S.camError?`<div class="card small" style="background:#fff7ed;border-color:#fed7aa;color:#9a3412;line-height:1.5"><b>Kamera belum bisa dibuka.</b> Izinkan akses kamera di browser lalu tekan "Buka Kamera", atau pakai tombol "Ambil / Unggah Foto".</div>`:''}</div>
   <div class="sticky sec">
   <div class="card flat sec">
-    <div><b style="font-size:15px">Tips Scan Wajah</b><ul class="small" style="margin:10px 0 0;padding-left:18px;line-height:1.9"><li>Lepas kacamata</li><li>Hadap kamera</li><li>Pencahayaan cukup</li></ul><div class="xs muted" style="margin-top:10px;line-height:1.5">Foto dikirim sementara ke layanan AI (Google Gemini) hanya untuk dianalisis dan tidak disimpan oleh Snipster.</div></div>
+    <div><b style="font-size:15px">Tips Scan Wajah</b><ul class="small" style="margin:10px 0 0;padding-left:18px;line-height:1.9"><li>Lepas kacamata</li><li>Hadap kamera</li><li>Pencahayaan cukup</li></ul><div class="xs muted" style="margin-top:10px;line-height:1.5">Foto dikirim sementara ke layanan AI pihak ketiga (Groq dan Google Gemini) hanya untuk dianalisis dan tidak disimpan oleh Snipster.</div></div>
     <button class="btn light full" data-act="${S.stream?'camOff':'camOn'}" ${S.scanning?'disabled':''}><i class="fa-solid ${S.stream?'fa-video-slash':'fa-video'}"></i> ${S.stream?'Tutup Kamera':'Buka Kamera'}</button>
     <label class="btn light full" for="scanfile" style="cursor:pointer"><i class="fa-solid fa-camera"></i> ${S.scanPhoto?'Ganti foto':'Ambil / Unggah Foto'}</label><input type="file" id="scanfile" accept="image/*" capture="user" hidden>
     ${left?`<button class="btn full" data-act="startScan" ${S.scanning?'disabled':''}>${S.scanning?'Memindai…':'Mulai Scan'}</button><span class="xs muted" style="text-align:center">Setiap scan memakai 1 kuota</span>`:`<button class="btn blue full" data-act="toPacks">Beli Paket Scan</button>`}
@@ -404,25 +446,25 @@ V.hasil=()=>`${crumb('Hasil Analisis')}
 </div>`;
 
 V.match=()=>`${crumb('Smart Barber Match')}
-<div class="ph"><div><h1>Smart Barber Match</h1><p>Barber diurutkan berdasarkan kecocokan dengan gaya <b>${S.style}</b>, rating, dan rekam jejak ulasan.</p></div></div>
+<div class="ph"><div><h1>Pilih Barbershop</h1><p>Pilih barbershop di Bekasi untuk mengerjakan gaya <b>${S.style}</b>. Lihat semua pilihan di halaman Pilih Barbershop.</p></div></div>
 <div class="two">
-  <div class="sec"><div class="lbl-up">Barber Rekomendasi</div>
-  ${['andi','rian','bima'].map(id=>{const b=BARBERS[id];return `<button class="opt ${S.barber===id?'on':''}" data-act="selBarber" data-id="${id}"><span class="radio"></span>${av(id,52)}<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">${b.name.split(' ')[0]} "${b.nick}"</div><div class="small muted">${b.spec}</div><div class="xs" style="color:var(--orange);font-weight:700;margin-top:2px">⭐ ${b.rating} • ${b.reviews} Reviews</div></div><span class="mbadge">${b.match}% Match</span></button>`}).join('')}</div>
+  <div class="sec"><div class="lbl-up">Barbershop di Bekasi</div>
+  ${Object.keys(BARBERS).slice(0,6).map(id=>{const b=BARBERS[id];return `<button class="opt ${S.barber===id?'on':''}" data-act="selBarber" data-id="${id}"><span class="radio"></span>${av(id,52)}<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">${b.name}</div><div class="small muted">${b.cabang} · ${b.addr}</div><div class="xs" style="color:var(--orange);font-weight:700;margin-top:2px">${rateTxt(b)}</div></div><span class="mbadge">Buka ${b.hours}</span></button>`}).join('')}<button class="link" style="text-align:left" data-go="barber">Lihat semua barbershop di Bekasi →</button></div>
   <div class="card flat sticky sec"><div class="row"><div style="width:64px;height:64px;border-radius:12px;background:#e9edf3;overflow:hidden;display:grid;place-items:end center">${hairArt(STYLES.find(s=>s.n===S.style).h,64)}</div><div><div class="xs muted">Gaya dipilih</div><b style="font-size:16px">${S.style}</b></div></div>
-  <div class="row" style="border-top:1px solid var(--line);padding-top:14px">${av(S.barber,40)}<div><div class="xs muted">Barber dipilih</div><b>${BARBERS[S.barber].name}</b></div></div>
-  <button class="btn full" data-act="toJadwal">Pilih Barber &amp; Lanjut Booking</button></div>
+  <div class="row" style="border-top:1px solid var(--line);padding-top:14px">${av(S.barber,40)}<div><div class="xs muted">Barbershop dipilih</div><b>${BARBERS[S.barber].name}</b></div></div>
+  <button class="btn full" data-act="toJadwal">Pilih Barbershop &amp; Lanjut Booking</button></div>
 </div>`;
 
-V.jadwal=()=>{const b=BARBERS[S.barber];const days=['12 Jun','13 Jun','14 Jun','15 Jun','16 Jun'];const times=['09:00','10:00','11:00','13:00','14:00','16:00'];return `${crumb('Booking Barber')}
-<div class="ph"><div><h1>Booking Barber</h1><p>Pilih tanggal dan jam kedatangan di Cabang ${b.cabang}.</p></div></div>
+V.jadwal=()=>{const b=BARBERS[S.barber];const times=['09:00','10:00','11:00','13:00','14:00','16:00'];return `${crumb('Booking Barber')}
+<div class="ph"><div><h1>Booking Barber</h1><p>Pilih tanggal dan jam kedatangan di ${b.name}.</p></div></div>
 <div class="two">
   <div class="card sec" style="gap:26px">
-    <div class="row">${av(b.id,60)}<div><b style="font-size:16px">${b.name.split(' ')[0]} ${b.nick}</b><div class="small muted">${b.spec}</div><div class="xs" style="color:var(--orange);font-weight:700">⭐ ${b.rating} • ${b.reviews} Reviews</div></div></div>
-    <div class="sec" style="gap:10px"><div><b>Pilih Tanggal</b><div class="xs muted">Sebagai ${tier().name} Member, kamu bisa booking hingga ${tier().window} hari ke depan.</div></div><div class="dates">${days.map(d=>`<button class="date ${S.aiDate===d?'on':''}" data-act="aiDate" data-id="${d}"><small>JUN</small><b>${d.split(' ')[0]}</b></button>`).join('')}</div></div>
+    <div class="row">${av(b.id,60)}<div><b style="font-size:16px">${b.name}</b><div class="small muted">${b.addr}</div><div class="xs" style="color:var(--orange);font-weight:700">${rateTxt(b)}</div></div></div>
+    <div class="sec" style="gap:10px"><div><b>Pilih Tanggal</b><div class="xs muted">Sebagai ${tier().name} Member, kamu bisa booking hingga ${tier().window} hari ke depan.</div></div><div class="dates">${DAYS.map(d=>`<button class="date ${S.aiDate===d.key?'on':''}" data-act="aiDate" data-id="${d.key}"><small>${d.dn}</small><b>${d.d}</b><small>${d.m}</small></button>`).join('')}</div></div>
     <div class="sec" style="gap:10px"><b>Pilih Jam</b><div class="times">${times.map(t=>`<button class="time ${S.aiTime===t?'on':''}" data-act="aiTime" data-id="${t}">${t}</button>`).join('')}</div></div>
   </div>
   <div class="card flat sticky sec"><div class="lbl-up">Ringkasan</div>
-    <div class="sum-line"><span class="muted">Gaya</span><b>${S.style}</b></div><div class="sum-line"><span class="muted">Barber</span><b>${b.name}</b></div><div class="sum-line"><span class="muted">Jadwal</span><b>${S.aiDate} 2026, ${S.aiTime}</b></div><div class="sum-line total"><span>Harga</span><span class="price num">Rp 85.000</span></div>
+    <div class="sum-line"><span class="muted">Gaya</span><b>${S.style}</b></div><div class="sum-line"><span class="muted">Barbershop</span><b>${b.name}</b></div><div class="sum-line"><span class="muted">Jadwal</span><b>${dayLabel(S.aiDate)}, ${S.aiTime}</b></div><div class="sum-line total"><span>Harga</span><span class="price num">Rp 85.000</span></div>
     <button class="btn full" data-act="aiPay">Lanjut ke Pembayaran</button></div>
 </div>`};
 
@@ -431,16 +473,16 @@ V.book=()=>{const b=S.bk,cab=b.mode==='cabang';const noSvc=!cab&&!b.home.groomin
 <div class="two"><div class="sec" style="gap:26px">
   <div class="seg"><button class="${cab?'on':''}" data-act="mode" data-id="cabang"><i class="fa-solid fa-shop"></i> Cabang</button><button class="${!cab?'on':''}" data-act="mode" data-id="home"><i class="fa-solid fa-house"></i> Home Service</button></div>
   ${cab?`
-  <div class="sec" style="gap:10px"><b>Cabang Terdekat</b><div class="card row"><span style="color:var(--red);font-size:18px"><i class="fa-solid fa-location-dot"></i></span><div style="flex:1"><b>Smartcut - Cabang Kemang</b><div class="small muted">Jl. Kemang Raya No. 12, Jakarta Selatan</div></div><button class="link" data-act="toast" data-msg="Pilihan cabang lain akan segera hadir">Ubah</button></div></div>
+  <div class="sec" style="gap:10px"><b>Pilih Barbershop (Bekasi)</b><div class="chips">${AREAS.map(a=>`<button class="chip ${S.bkArea===a?'on':''}" data-act="bkArea" data-id="${a}">${a}</button>`).join('')}</div><div class="sec" style="gap:8px">${Object.values(CABANGS).filter(c=>c.short===S.bkArea).map(c=>`<button class="opt ${b.cabang===c.id?'on':''}" data-act="cabangSel" data-id="${c.id}"><span class="radio"></span><span style="color:var(--red);font-size:16px"><i class="fa-solid fa-location-dot"></i></span><div style="flex:1;min-width:0"><b>${c.name}</b><div class="small muted">${c.addr}</div><div class="xs muted">Buka ${c.hours}</div></div></button>`).join('')}</div></div>
   <div class="sec" style="gap:10px"><b>Pilih Layanan</b><div class="grid2 st">${[['tfw','Textured Fade & Wash',85000,'± 45 menit'],['classic','Classic Haircut',65000,'± 30 menit']].map(s=>`<button class="opt ${b.svc===s[0]?'on':''}" data-act="svc" data-id="${s[0]}"><span class="radio"></span><div><div style="font-weight:700;color:${b.svc===s[0]?'var(--blue-deep)':'inherit'}">${s[1]}</div><div class="small"><span class="price">${rp(s[2])}</span> <span class="muted">· ${s[3]}</span></div></div></button>`).join('')}</div></div>
   <div class="sec" style="gap:12px"><div><b>Pilih Jadwal</b><div class="xs muted">Sebagai ${tier().name} Member, kamu bisa booking hingga ${tier().window} hari ke depan.</div></div>
-   <div class="dates">${[['SEN','27'],['SEL','28'],['RAB','29'],['KAM','30'],['JUM','31']].map(d=>`<button class="date ${b.date===d[1]?'on':''}" data-act="date" data-id="${d[1]}"><small>${d[0]}</small><b>${d[1]}</b></button>`).join('')}</div>
+   <div class="dates">${DAYS.map(d=>`<button class="date ${b.date===d.key?'on':''}" data-act="date" data-id="${d.key}"><small>${d.dn}</small><b>${d.d}</b><small>${d.m}</small></button>`).join('')}</div>
    <div class="times">${['10:00','11:30','13:00','14:30','16:00','18:30'].map((t,i)=>`<button class="time ${b.time===t?'on':''}" data-act="time" data-id="${t}" ${i===3?'disabled title="Penuh"':''}>${t}</button>`).join('')}</div></div>
   `:`
-  <div class="sec" style="gap:10px"><div class="lbl-up">Lokasi Kedatangan</div><div class="card row" style="align-items:flex-start"><span style="color:var(--red);font-size:18px"><i class="fa-solid fa-location-dot"></i></span><div style="flex:1"><b>Rumah (Budi Pratama)</b><div class="small muted">Jl. Sudirman No. 12, Kav 4, Jakarta Pusat (Dekat Minimarket ABC)</div></div><button class="link" data-act="toast" data-msg="Kelola alamat ada di Profil → Alamat Tersimpan">Ganti</button></div></div>
+  <div class="sec" style="gap:10px"><div class="lbl-up">Lokasi Kedatangan</div><div class="card row" style="align-items:flex-start"><span style="color:var(--red);font-size:18px"><i class="fa-solid fa-location-dot"></i></span><div style="flex:1"><b>Rumah (Budi Pratama)</b><div class="small muted">Perumahan Pondok Ungu Permai Blok B No. 12, Bekasi Utara (dekat minimarket)</div></div><button class="link" data-act="toast" data-msg="Kelola alamat ada di Profil → Alamat Tersimpan">Ganti</button></div></div>
   <div class="sec" style="gap:10px"><div class="lbl-up">Smart Match Barber Terdekat</div>
    <div class="card" style="border:2px solid var(--blue);position:relative;padding-top:22px"><span class="pill" style="position:absolute;top:-11px;right:14px;background:var(--blue);color:#fff">ALGORITMA SMART MATCH ✨</span>
-    <div class="spread" style="flex-wrap:wrap"><div class="row">${av('rian',52)}<div><b style="font-size:15px">Rian "The Specialist"</b><div class="small" style="color:var(--blue)">Spesialis: Undercut, Textured Fade</div></div></div><div style="text-align:right"><div class="xs muted"><i class="fa-regular fa-clock"></i> Estimasi Tiba di Lokasi</div><b style="font-size:16px">18 - 25 Mnt</b></div></div></div></div>
+    <div class="spread" style="flex-wrap:wrap"><div class="row">${av(HOMEB,52)}<div><b style="font-size:15px">${HOMEB.name}</b><div class="small" style="color:var(--blue)">Mitra Home Service Snipster</div></div></div><div style="text-align:right"><div class="xs muted"><i class="fa-regular fa-clock"></i> Estimasi Tiba di Lokasi</div><b style="font-size:16px">18 - 25 Mnt</b></div></div></div></div>
   <div class="sec" style="gap:10px"><div class="lbl-up">Layanan Dipilih</div><div class="grid2 st">
    ${[['grooming',"Gentleman's Grooming (Full)",120000],['beard','Beard Trim & Massage',45000]].map(s=>`<button class="opt ${b.home[s[0]]?'on':''}" data-act="homeSvc" data-id="${s[0]}"><span class="check ${b.home[s[0]]?'on':''}">${b.home[s[0]]?'<i class="fa-solid fa-check"></i>':''}</span><span style="flex:1;font-weight:700">${s[1]}</span><span class="price small num">${rp(s[2])}</span></button>`).join('')}</div>
    <div class="xs muted">*Biaya sudah termasuk ongkir &amp; alat steril.</div></div>
@@ -454,9 +496,9 @@ V.bayar=()=>{const canPts=S.points>0;const usable=Math.min(S.points,grossBooking
   <div class="sec" style="gap:10px"><div class="lbl-up">Pilih Metode Pembayaran</div>${methods.map(m=>`<button class="opt ${S.bk.pay===m[0]?'on':''}" data-act="bkPay" data-id="${m[0]}"><span style="width:24px;font-size:16px"><i class="fa-solid ${m[2]}"></i></span><span style="flex:1;font-weight:700">${m[1]}</span><span class="radio"></span></button>`).join('')}</div>
 </div>${bookingSummary('Bayar Sekarang','payBooking')}</div>`};
 
-V.sukses=()=>{const k=S.lastBooking||{barber:'Andi The Fade Master',date:'12 Juni 2026',time:'10:00',svc:'Textured Crop',home:false};return `<div class="success">
+V.sukses=()=>{const k=S.lastBooking||{barber:'Captain Barbershop Summarecon Bekasi',date:'12 Juni 2026',time:'10:00',svc:'Textured Crop',home:false};return `<div class="success">
   <div class="ok"><i class="fa-solid fa-check"></i></div><h1>Pembayaran Berhasil!</h1><p class="muted">${k.home?'Booking barber kamu sudah dikonfirmasi. Barber akan datang sesuai jadwal.':'Booking barber kamu sudah dikonfirmasi. Silakan datang sesuai jadwal.'}</p>
-  <div class="card flat" style="width:100%;margin-top:14px"><dl class="dl" style="margin:0"><div><dt>Barber</dt><dd>${k.barber}</dd></div><div><dt>Tanggal</dt><dd>${k.date}</dd></div><div><dt>Jam</dt><dd>${k.time}</dd></div><div><dt>Layanan</dt><dd>${k.svc}</dd></div>${k.earned?`<div><dt>Poin didapat</dt><dd style="color:var(--green)">+${k.earned} Poin</dd></div>`:''}</dl></div>
+  <div class="card flat" style="width:100%;margin-top:14px"><dl class="dl" style="margin:0"><div><dt>${k.home?'Barber':'Barbershop'}</dt><dd>${k.barber}</dd></div>${k.cabang?`<div><dt>Alamat</dt><dd>${k.cabang}</dd></div>`:''}<div><dt>Tanggal</dt><dd>${k.date}</dd></div><div><dt>Jam</dt><dd>${k.time}</dd></div><div><dt>Layanan</dt><dd>${k.svc}</dd></div>${k.earned?`<div><dt>Poin didapat</dt><dd style="color:var(--green)">+${k.earned} Poin</dd></div>`:''}</dl></div>
   <div class="row" style="width:100%;margin-top:10px;flex-wrap:wrap">${k.home?'<button class="btn light" style="flex:1" data-go="tracking">Lacak Barber</button>':'<button class="btn light" style="flex:1" data-act="seeOrders">Lihat Pesanan</button>'}<button class="btn" style="flex:1" data-act="goHome">Kembali ke Home</button></div>
 </div>`};
 
@@ -465,19 +507,19 @@ V.pesanan=()=>{const ber=S.tab==='berjalan';return `
 <div class="tabs"><button class="${ber?'on':''}" data-act="tab" data-id="berjalan">Berjalan</button><button class="${!ber?'on':''}" data-act="tab" data-id="riwayat">Riwayat</button></div>
 ${ber?`<div class="grid2 st" style="align-items:start">
   <div class="card sec"><div class="spread"><div><span class="pill" style="background:var(--blue);color:#fff">HOME SERVICE</span><div class="xs muted" style="margin-top:6px">ID Pesanan: #SC-99210</div></div><b class="small" style="color:var(--green)">${S.eta>0?'Sedang Jalan':'Sudah Tiba'}</b></div>
-   <div class="row" style="background:#f4f8f8;border-radius:12px;padding:12px">${av('rian',46)}<div style="flex:1"><b>Rian "The Specialist"</b><div class="xs muted">⭐ 4.9 · Spesialis Fade</div></div><button class="iconbtn" style="background:#fff;color:var(--blue)" data-go="chat" aria-label="Chat barber"><i class="fa-solid fa-comment"></i></button></div>
-   <div class="spread"><div class="row" style="gap:10px"><span style="width:10px;height:10px;border-radius:50%;background:var(--blue)"></span><div><b class="small">${S.eta>0?'Barber di jalan':'Barber sudah di depan rumah'}</b><div class="xs muted">Jl. Gatot Subroto No. 44</div></div></div><b style="color:var(--blue)">${S.eta} Menit</b></div>
+   <div class="row" style="background:#f4f8f8;border-radius:12px;padding:12px">${av(HOMEB,46)}<div style="flex:1"><b>${HOMEB.name}</b><div class="xs muted">Mitra Home Service Snipster</div></div><button class="iconbtn" style="background:#fff;color:var(--blue)" data-go="chat" aria-label="Chat barber"><i class="fa-solid fa-comment"></i></button></div>
+   <div class="spread"><div class="row" style="gap:10px"><span style="width:10px;height:10px;border-radius:50%;background:var(--blue)"></span><div><b class="small">${S.eta>0?'Barber di jalan':'Barber sudah di depan rumah'}</b><div class="xs muted">Perumahan Pondok Ungu Permai, Bekasi Utara</div></div></div><b style="color:var(--blue)">${S.eta} Menit</b></div>
    <button class="btn light full" data-go="tracking"><i class="fa-solid fa-map-location-dot"></i> Tracking Peta</button></div>
   <div class="sec">
-   <div class="card sec" style="background:#ecfdf5;border-color:#bbf7d0;gap:8px"><div class="xs" style="color:var(--amber-ink);font-weight:800;letter-spacing:.06em">BERIKAN PENILAIAN!</div><b style="font-size:15px">Potong Rambut - Cabang Kemang</b><div class="small muted">Selesai Kemarin · Andi</div><div class="spread"><b class="small" style="color:var(--amber-ink)">+500 Poin</b><button class="btn sm" style="background:var(--orange)" data-act="rateAndi">Beri Rating</button></div></div>
+   <div class="card sec" style="background:#ecfdf5;border-color:#bbf7d0;gap:8px"><div class="xs" style="color:var(--amber-ink);font-weight:800;letter-spacing:.06em">BERIKAN PENILAIAN!</div><b style="font-size:15px">Potong Rambut - Captain Barbershop Summarecon Bekasi</b><div class="small muted">Selesai Kemarin</div><div class="spread"><b class="small" style="color:var(--amber-ink)">+500 Poin</b><button class="btn sm" style="background:var(--orange)" data-act="rateLast">Beri Rating</button></div></div>
    ${S.upcoming.map(u=>`<div class="card sec" style="gap:8px"><div class="spread"><span class="pill" style="background:var(--blue-soft);color:var(--blue)">${u.home?'HOME SERVICE':'BOOKING CABANG'}</span><b class="small" style="color:var(--blue)">Dijadwalkan</b></div><b style="font-size:15px">${u.svc}</b><div class="small muted">${u.barber} · ${u.date}, ${u.time}</div><div class="spread" style="border-top:1px solid var(--line);padding-top:10px"><span class="xs muted">Reschedule gratis tersisa ${Math.max(0,tier().resched-S.reschedUsed)}x bulan ini</span><button class="btn light sm" data-act="resched">Reschedule</button></div></div>`).join('')}
   </div></div>`:`
   <div class="sec"><div class="lbl-up">Bulan Ini</div><div class="grid2 st" style="align-items:start">
   ${S.lastOrder?`<div class="card sec" style="gap:10px"><div class="spread"><div><b>Pembelian: ${S.lastOrder.items}</b><div class="xs muted">${S.lastOrder.id} • Dikirim ke rumah</div></div><span class="pill" style="background:var(--blue-soft);color:var(--blue)">DIKEMAS</span></div><div class="spread" style="border-top:1px solid var(--line);padding-top:10px"><span class="small muted">Estimasi tiba 24 - 26 Mei</span><b class="num">${rp(S.lastOrder.total)}</b></div></div>`:''}
-  ${hist('Classic Cut + Hairwash','14 Mar 2026 • Cabang Sudirman','SELESAI',userAv(32,'Budi Santoso','#8b6b4f'),'Budi Santoso','Rp 65.000',`${stars(5)}<span class="pill" style="background:var(--blue-soft);color:var(--blue)">+1.300 Poin</span>`)}
-  ${hist("Home Service: Gentleman's Grooming",'10 Mar 2026 • Rumah','SELESAI',av('andi',32),'Andi "The Fade"','Rp 120.000',`<span class="xs muted">Berikan rating untuk poin</span><button class="btn blue sm" data-act="rateAndi">Beri Rating</button>`)}
+  ${hist('Classic Cut + Hairwash','14 Mar 2026 • Captain Barbershop Grand Galaxy','SELESAI',userAv(32,'Budi Santoso','#8b6b4f'),'Budi Santoso','Rp 65.000',`${stars(5)}<span class="pill" style="background:var(--blue-soft);color:var(--blue)">+1.300 Poin</span>`)}
+  ${hist("Home Service: Gentleman's Grooming",'10 Mar 2026 • Rumah','SELESAI',av(HOMEB,32),HOMEB.name,'Rp 120.000',`<span class="xs muted">Berikan rating untuk poin</span><button class="btn blue sm" data-act="rateLast">Beri Rating</button>`)}
   </div><div class="lbl-up" style="margin-top:8px">Februari 2026</div><div class="grid2 st" style="align-items:start">
-  ${hist('Pembelian: Premium Pomade Clay','28 Feb 2026 • Cabang Kemang','DIAMBIL',prodArt('pomade',.45),'Stok Cabang Kemang','Rp 85.000',`${stars(4)}<span class="pill" style="background:var(--blue-soft);color:var(--blue)">Dihitung ke level</span>`)}
+  ${hist('Pembelian: Water-Based Pomade','28 Feb 2026 • Cabang Summarecon Bekasi','DIAMBIL',prodArt('pomade',.45),'Stok Cabang Summarecon','Rp 89.000',`${stars(4)}<span class="pill" style="background:var(--blue-soft);color:var(--blue)">Dihitung ke level</span>`)}
   </div></div>`}`};
 function hist(t,sub,st,img,who,price,foot){return `<div class="card sec" style="gap:12px"><div class="spread"><div><b>${t}</b><div class="xs muted">${sub}</div></div><span class="pill" style="background:var(--green-bg);color:var(--green)">${st}</span></div><div class="spread" style="border-top:1px solid var(--line);padding-top:12px"><div class="row" style="gap:10px">${img}<b class="small">${who}</b></div><b class="num">${price}</b></div><div class="spread">${foot}</div></div>`}
 
@@ -490,41 +532,39 @@ V.tracking=()=>{const x=20+(8-S.eta)*5,y=36+(8-S.eta)*2.6;return `${crumb('Track
     <div class="pin" style="left:${x}%;top:${y}%;background:#dbeafe;border:3px solid #fff">🛵</div><div class="pin" style="left:62%;top:58%;background:var(--navy);border:3px solid #fff">🏠</div>
   </div>
   <div class="sticky sec">
-    <div class="card flat sec"><b>Barber Info</b><div class="spread"><div class="row">${av('rian',50)}<div><b style="font-size:15px">Rian Hidayat</b><div class="xs muted">⭐ 4.9 Spesialis Fade</div></div></div><div class="eta"><div><b class="num">${S.eta}</b><div class="xs muted">Menit</div></div></div></div>
-    <div class="row" style="gap:10px"><span style="width:10px;height:10px;border-radius:50%;background:var(--blue)"></span><div><b class="small">${S.eta>0?'Barber di jalan':'Barber sudah di depan rumah'}</b><div class="xs muted">Jl. Gatot Subroto No. 4</div></div></div></div>
+    <div class="card flat sec"><b>Barber Info</b><div class="spread"><div class="row">${av(HOMEB,50)}<div><b style="font-size:15px">${HOMEB.name}</b><div class="xs muted">Mitra Home Service Snipster</div></div></div><div class="eta"><div><b class="num">${S.eta}</b><div class="xs muted">Menit</div></div></div></div>
+    <div class="row" style="gap:10px"><span style="width:10px;height:10px;border-radius:50%;background:var(--blue)"></span><div><b class="small">${S.eta>0?'Barber di jalan':'Barber sudah di depan rumah'}</b><div class="xs muted">Perumahan Pondok Ungu Permai, Bekasi Utara</div></div></div></div>
     ${chatPanel()}
   </div>
 </div>`};
 V.chat=V.tracking;
-function chatPanel(){return `<div class="card flat" style="padding:0;overflow:hidden" id="chatcard"><div class="row" style="padding:12px 14px;border-bottom:1px solid var(--line)">${av('rian',36)}<div style="flex:1"><b>Rian Hidayat</b><div class="xs" style="color:var(--green);font-weight:700">● Sedang di jalan</div></div><button class="iconbtn" style="background:var(--blue-soft);color:var(--blue)" data-act="toast" data-msg="Nomor barber: 0812-7788-9900" aria-label="Telepon"><i class="fa-solid fa-phone"></i></button></div>
+function chatPanel(){return `<div class="card flat" style="padding:0;overflow:hidden" id="chatcard"><div class="row" style="padding:12px 14px;border-bottom:1px solid var(--line)">${av(HOMEB,36)}<div style="flex:1"><b>${HOMEB.name}</b><div class="xs" style="color:var(--green);font-weight:700">● Sedang di jalan</div></div><button class="iconbtn" style="background:var(--blue-soft);color:var(--blue)" data-act="toast" data-msg="Nomor barber: 0812-7788-9900" aria-label="Telepon"><i class="fa-solid fa-phone"></i></button></div>
 <div class="chat" id="chatlog"><div class="xs muted" style="text-align:center;font-weight:800;letter-spacing:.06em">HARI INI, 10:45</div>${S.chat.map(m=>`<div class="msg ${m.me?'me':'them'}">${esc(m.t)}<small>${m.at}</small></div>`).join('')}</div>
 <form class="compose" id="chatform"><input id="chatin" placeholder="Tulis pesan..." autocomplete="off" aria-label="Tulis pesan"><button class="iconbtn" style="background:var(--navy);color:#fff" aria-label="Kirim"><i class="fa-solid fa-paper-plane"></i></button></form></div>`}
 
-V.barber=()=>{const list=['andi','bima','rian'].filter(id=>S.cabangFilter==='Semua'||BARBERS[id].cabang===S.cabangFilter);return `
-<div class="ph"><div><h1>Pilih Barber</h1><p>Bandingkan spesialisasi, rating, dan ulasan sebelum booking.</p></div></div>
-<div class="chips" style="margin-bottom:20px">${['Semua','Kemang','Senopati','Menteng','BSD City'].map(c=>`<button class="chip ${S.cabangFilter===c?'on':''}" data-act="cab" data-id="${c}">${c}</button>`).join('')}</div>
-${list.length?`<div class="grid3">${list.map(id=>{const b=BARBERS[id];return `<div class="card bcard"><div class="top-r">${av(id,64)}<div style="flex:1;min-width:0"><b style="font-size:16px">${b.name}</b><div class="small muted">${b.style}</div><span class="xs" style="background:var(--soft);padding:3px 8px;border-radius:5px;display:inline-block;margin-top:6px"><i class="fa-solid fa-location-dot" style="color:var(--red)"></i> ${b.cabang}</span></div></div>
-<div class="spread small"><span style="color:var(--orange);font-weight:800">⭐ ${b.rating}</span><span class="muted">(${b.reviews} Review)</span></div>
-<div class="grid2" style="gap:10px"><button class="btn light" style="padding:10px" data-act="openReviews" data-id="${id}">Review</button><button class="btn" style="padding:10px" data-act="pickBarber" data-id="${id}">Pilih Barber</button></div></div>`}).join('')}</div>`:`<div class="card empty"><b>Belum ada barber di cabang ${S.cabangFilter}</b><span class="muted small">Coba pilih cabang lain atau gunakan Home Service.</span></div>`}`};
+V.barber=()=>{const list=Object.keys(BARBERS).filter(id=>S.cabangFilter==='Semua'||BARBERS[id].cabang===S.cabangFilter);return `
+<div class="ph"><div><h1>Pilih Barbershop</h1><p>Barbershop di Bekasi lengkap dengan alamat dan jam buka. Pilih yang paling dekat denganmu.</p></div></div>
+<div class="chips" style="margin-bottom:20px">${['Semua',...AREAS].map(c=>`<button class="chip ${S.cabangFilter===c?'on':''}" data-act="cab" data-id="${c}">${c}</button>`).join('')}</div>
+${list.length?`<div class="grid3">${list.map(id=>{const b=BARBERS[id];return `<div class="card bcard"><div class="top-r">${av(id,64)}<div style="flex:1;min-width:0"><b style="font-size:16px">${b.name}</b><div class="small muted">${b.addr}</div><span class="xs" style="background:var(--soft);padding:3px 8px;border-radius:5px;display:inline-block;margin-top:6px"><i class="fa-solid fa-location-dot" style="color:var(--red)"></i> ${b.cabang}</span></div></div>
+<div class="spread small"><span style="color:var(--orange);font-weight:800">${rateTxt(b)}</span><span class="muted xs">Buka ${b.hours}</span></div>
+<div class="grid2" style="gap:10px"><button class="btn light" style="padding:10px" data-act="openReviews" data-id="${id}">Review</button><button class="btn" style="padding:10px" data-act="pickBarber" data-id="${id}">Pilih Barber</button></div></div>`}).join('')}</div>`:`<div class="card empty"><b>Belum ada barbershop di area ${S.cabangFilter}</b><span class="muted small">Coba pilih cabang lain atau gunakan Home Service.</span></div>`}`};
 
-const BREVIEWS={andi:[['Rizky P.','2 hari lalu',5,'Textured Crop','Potongan sangat rapi! Mas Andi ramah banget paham style rambut yang cocok buat muka saya.'],['Kevin M.','1 minggu lalu',4,'Undercut','Fade-nya mulus, tempatnya juga bersih. Sayang tadi antrenya lumayan meskipun udah booking.'],['Arif W.','2 minggu lalu',5,'Low Fade','Konsisten bagus tiap bulan potong di sini. Booking lewat Snipster jadi gak perlu nunggu lama.']],
- rian:[['Dimas A.','3 hari lalu',5,'Korean Textured Fade','Hasilnya persis kayak referensi foto. Datang tepat waktu buat home service.'],['Yoga S.','2 minggu lalu',5,'Two Block','Detail banget waktu ngerapihin samping. Recommended!']],
- bima:[['Fajar R.','4 hari lalu',5,'Classic Pompadour','Pompadour-nya rapi dan awet. Dikasih tips styling juga.'],['Hendra T.','3 minggu lalu',4,'Side Part','Bagus, cuma agak lama nunggunya.']]};
+const BREVIEWS={}; /* ulasan barbershop akan terisi dari pelanggan Snipster */
 V.ulasanBarber=()=>{const b=BARBERS[S.reviewBarber];return `${crumb('Ulasan Barber')}
 <div class="ph"><div><h1>Ulasan Barber</h1><p>Pengalaman pelanggan lain dengan ${b.name}.</p></div></div>
 <div class="two" style="grid-template-columns:340px minmax(0,1fr)">
-  <div class="card flat sticky sec"><div class="row">${av(b.id,52)}<div><b style="font-size:16px">${b.name}</b><div class="small muted">"${b.nick}"</div></div></div>
-   <div class="rsum" style="border-top:1px solid var(--line);padding-top:16px"><div style="text-align:center"><div class="big num">${b.rating}</div>${stars(5)}<div class="xs muted">${b.total} Ulasan</div></div><div class="dist">${[88,8,3,1,0].map((d,i)=>`<div>${5-i}<span class="b"><i style="width:${d}%"></i></span></div>`).join('')}</div></div>
-   <button class="btn full" data-act="writeReview" data-id="${b.id}">Tulis Review</button><button class="btn light full" data-act="pickBarber" data-id="${b.id}">Booking ${b.name.split(' ')[0]}</button></div>
+  <div class="card flat sticky sec"><div class="row">${av(b.id,52)}<div><b style="font-size:16px">${b.name}</b><div class="small muted">${b.cabang}, Bekasi</div></div></div>
+   <div class="rsum" style="border-top:1px solid var(--line);padding-top:16px"><div style="text-align:center"><div class="big num">${b.rating||"–"}</div>${b.rating?stars(5):""}<div class="xs muted">${b.total?b.total+" Ulasan":"Belum ada ulasan"}</div></div><div class="dist">${(b.rating?[88,8,3,1,0]:[0,0,0,0,0]).map((d,i)=>`<div>${5-i}<span class="b"><i style="width:${d}%"></i></span></div>`).join('')}</div></div>
+   <button class="btn full" data-act="writeReview" data-id="${b.id}">Tulis Review</button><button class="btn light full" data-act="pickBarber" data-id="${b.id}">Booking di Sini</button></div>
   <div class="sec"><div class="chips">${['Semua','Dengan Foto','5 ⭐','4 ⭐'].map((c,i)=>`<button class="chip ${i===0?'on':''}">${c}</button>`).join('')}</div>
-  ${BREVIEWS[b.id].map((r,i)=>`<div class="card rev"><div class="spread"><div class="row" style="gap:10px">${userAv(30,r[0],['#5b7c99','#a0522d','#557a46'][i])}<b>${r[0]}</b></div><span class="xs muted">${r[1]}</span></div>${stars(r[2])}<span class="tag">Layanan: ${r[3]}</span><p style="margin:0;line-height:1.6">${r[4]}</p></div>`).join('')}</div>
+  ${(BREVIEWS[b.id]||[]).length?'':'<div class="card empty"><b>Belum ada ulasan</b><span class="muted small">Ulasan muncul setelah pelanggan Snipster selesai booking di sini.</span></div>'}${(BREVIEWS[b.id]||[]).map((r,i)=>`<div class="card rev"><div class="spread"><div class="row" style="gap:10px">${userAv(30,r[0],['#5b7c99','#a0522d','#557a46'][i])}<b>${r[0]}</b></div><span class="xs muted">${r[1]}</span></div>${stars(r[2])}<span class="tag">Layanan: ${r[3]}</span><p style="margin:0;line-height:1.6">${r[4]}</p></div>`).join('')}</div>
 </div>`};
 
 V.tulis=()=>{const b=BARBERS[S.reviewBarber];const lab=['','Kurang','Cukup','Bagus','Sangat Bagus!','Luar Biasa!'][S.stars];return `${crumb('Tulis Ulasan')}
 <div style="max-width:640px;margin:0 auto" class="sec">
  <div class="ph" style="margin-bottom:4px"><div><h1>Tulis Ulasan</h1><p>Ulasanmu membantu pelanggan lain dan menjaga kualitas barber.</p></div></div>
  <div class="card flat sec" style="gap:22px">
-  <div class="row">${av(b.id,52)}<div><b style="font-size:16px">${b.name}</b><div class="small muted">Cabang ${b.cabang}</div><span class="tag" style="display:inline-block;margin-top:4px">Layanan: Textured Fade</span></div></div>
+  <div class="row">${av(b.id,52)}<div><b style="font-size:16px">${b.name}</b><div class="small muted">${b.cabang}, Bekasi</div><span class="tag" style="display:inline-block;margin-top:4px">Layanan: Textured Fade</span></div></div>
   <div style="text-align:center;display:flex;flex-direction:column;gap:6px;border-block:1px solid var(--line);padding-block:20px"><b style="font-size:16px">Bagaimana hasil potongannya?</b><div class="small muted">Klik bintang untuk menilai</div><div class="stars-in">${[1,2,3,4,5].map(i=>`<button class="${i<=S.stars?'on':''}" data-act="star" data-id="${i}" aria-label="${i} bintang"><i class="fa-solid fa-star"></i></button>`).join('')}</div><b style="color:var(--orange)">${lab}</b></div>
   <div style="position:relative"><textarea id="revtext" maxlength="500" placeholder="Ceritakan pengalamanmu (Opsional)...&#10;Apakah barbernya ramah? Sesuai request?">${esc(S.review)}</textarea><span class="xs muted" id="revcount" style="position:absolute;right:14px;bottom:12px">${S.review.length}/500</span></div>
   <div class="sec" style="gap:8px"><b class="small">Tambah Foto (Opsional)</b><label class="add-photo" for="revphoto" style="${S.photo?`background-image:url(${S.photo})`:''}">${S.photo?'':'<span><i class="fa-solid fa-camera"></i><br>Tambah</span>'}</label><input type="file" id="revphoto" accept="image/*" hidden></div>
@@ -535,26 +575,32 @@ V.terkirim=()=>`<div class="success"><div class="ok"><i class="fa-solid fa-check
 
 V.toko=()=>{const q=S.search.trim().toLowerCase();const ids=Object.keys(PRODUCTS).filter(id=>(!q||PRODUCTS[id].name.toLowerCase().includes(q))&&(S.shopCat==='Semua'||PRODUCTS[id].cat===S.shopCat));return `
 <div class="ph"><div><h1>Toko</h1><p>Produk grooming pilihan barber, dikirim ke rumah atau ambil di cabang.</p></div>
-<label class="search"><i class="fa-solid fa-magnifying-glass muted"></i><input id="search" placeholder="Cari pomade, shampoo, dll..." value="${esc(S.search)}" aria-label="Cari produk"></label></div>
+<label class="search"><i class="fa-solid fa-magnifying-glass muted"></i><input id="search" placeholder="Cari pomade, clay, beard oil..." value="${esc(S.search)}" aria-label="Cari produk"></label></div>
 <div class="stack">
- ${q?'':`<div class="promo"><div><div class="xs" style="opacity:.75;letter-spacing:.14em;font-weight:700">SNIPSTER STORE</div><b>Promo Spesial Bulan Ini</b><div class="small" style="margin-top:8px;opacity:.85">Diskon untuk semua produk perawatan rambut.</div></div><div class="off">20%<br><span style="font-size:11px;font-weight:700">OFF</span></div></div>`}
- <div class="chips">${['Semua','Styling','Perawatan'].map(c=>`<button class="chip ${S.shopCat===c?'on':''}" data-act="shopCat" data-id="${c}">${c}</button>`).join('')}</div>
- ${ids.length?`<div class="grid4">${ids.map(prodCard).join('')}</div>`:`<div class="card empty"><b>Produk "${esc(S.search)}" tidak ditemukan</b><span class="small muted">Coba kata kunci lain, misalnya "pomade" atau "shampoo".</span></div>`}
+ ${q?'':`<div class="promo"><div><div class="xs" style="opacity:.75;letter-spacing:.14em;font-weight:700">SNIPSTER STORE</div><b>Starter Grooming Kit</b><div class="small" style="margin:8px 0 12px;opacity:.85">Pomade + Shampoo + Sisir Saku, hemat ${rp(PRODUCTS.kit.old-PRODUCTS.kit.price)}.</div><button class="btn sm" style="background:#f4d58d;color:#1f3b3a" data-act="openProduct" data-id="kit">Lihat Paket</button></div><div class="off">13%<br><span style="font-size:11px;font-weight:700">OFF</span></div></div>`}
+ <div class="chips">${SHOP_CATS.map(c=>`<button class="chip ${S.shopCat===c?'on':''}" data-act="shopCat" data-id="${c}">${c}</button>`).join('')}</div>
+ ${ids.length?`<div class="grid4">${ids.map(prodCard).join('')}</div>`:`<div class="card empty"><b>Produk "${esc(S.search)}" tidak ditemukan</b><span class="small muted">Coba kata kunci lain, misalnya "pomade", "clay", atau "beard oil".</span></div>`}
 </div>`};
 
-const PREVIEWS=[['Riz*y','2 hari lalu',5,'100gr','Wanginya enak banget, maskulin tapi gak norak. Hold-nya juga awet seharian padahal dipake motoran. Bakal repeat order sih ini mantap 👍','#6b8e23'],['Dim*s','1 minggu lalu',4,'50gr','Bagus, teksturnya gampang diratain di tangan. Cuma pengirimannya agak lama kemarin ke rumah. Tapi overall barangnya oke sesuai deskripsi.','#b5536b']];
-function productReviews(){return `<section class="sec" id="reviews"><div class="sec-h"><h2>Ulasan Pembeli</h2></div><div class="two" style="grid-template-columns:300px minmax(0,1fr)">
- <div class="card flat"><div class="rsum"><div style="text-align:center"><div class="big">4.9</div>${stars(5)}<div class="xs muted">150 Ulasan</div></div><div class="dist">${[86,10,4,0,0].map((d,i)=>`<div>${5-i} <span class="star">★</span><span class="b"><i style="width:${d}%;background:var(--navy)"></i></span></div>`).join('')}</div></div></div>
+const REVIEW_SETS={
+ Styling:[['Riz*y','2 hari lalu',5,'Hold-nya kuat dan awet seharian, tapi tetap enak dibilas. Wanginya khas barbershop.','#6b8e23'],['Dim*s','1 minggu lalu',4,'Teksturnya enak dipakai dan gampang diratain. Kirim ke rumah di Bekasi cuma sehari, barang sesuai deskripsi.','#b5536b']],
+ Perawatan:[['Far*s','3 hari lalu',5,'Segar banget habis keramas, rambut bersih dari sisa pomade.','#6b8e23'],['Ant*','2 minggu lalu',4,'Wanginya enak dan cukup untuk dipakai rutin. Kemasannya agak licin kalau tangan basah.','#b5536b']],
+ Jenggot:[['Bay*','4 hari lalu',5,'Jenggot jadi lebih halus dan gampang dirapikan. Aromanya maskulin tapi tidak menyengat.','#6b8e23'],['Gal*h','2 minggu lalu',4,'Hasilnya bagus, cukup sedikit sudah merata. Cocok buat jenggot tipis sampai sedang.','#b5536b']],
+ Aksesori:[['Nau*l','1 minggu lalu',5,'Kayunya halus dan gak bikin rambut berdiri. Pas banget masuk saku celana.','#6b8e23'],['Ilh*m','3 minggu lalu',5,'Kualitas oke untuk harganya. Giginya rapat dan rapi.','#b5536b']],
+ Paket:[['Rez*','5 hari lalu',5,'Lebih hemat dibanding beli satuan. Cocok buat yang baru mulai merawat rambut.','#6b8e23'],['Ari*','2 minggu lalu',5,'Isi paketnya lengkap dan sesuai deskripsi. Dikemas rapi.','#b5536b']]
+};
+function productReviews(){const p=PRODUCTS[S.product],D=p.rating>=4.8?[86,10,4,0,0]:[70,20,8,2,0],v=p.variants[p.variants.length-1];return `<section class="sec" id="reviews"><div class="sec-h"><h2>Ulasan Pembeli</h2></div><div class="two" style="grid-template-columns:300px minmax(0,1fr)">
+ <div class="card flat"><div class="rsum"><div style="text-align:center"><div class="big">${p.rating}</div>${stars(Math.round(p.rating))}<div class="xs muted">${p.reviews} Ulasan</div></div><div class="dist">${D.map((d,i)=>`<div>${5-i} <span class="star">★</span><span class="b"><i style="width:${d}%;background:var(--navy)"></i></span></div>`).join('')}</div></div></div>
  <div class="sec"><div class="chips">${['Semua','Dengan Foto','5 ⭐','4 ⭐'].map((c,i)=>`<button class="chip ${i===0?'on':''}">${c}</button>`).join('')}</div>
- ${PREVIEWS.map(r=>`<div class="card rev"><div class="spread"><div class="row" style="gap:10px">${userAv(30,r[0],r[5])}<b>${r[0]}</b></div><span class="xs muted">${r[1]}</span></div>${stars(r[2])}<span class="xs" style="font-weight:800">Varian: ${r[3]}</span><p style="margin:0;line-height:1.6">${r[4]}</p></div>`).join('')}</div></div></section>`}
+ ${(REVIEW_SETS[p.cat]||REVIEW_SETS.Styling).map(r=>`<div class="card rev"><div class="spread"><div class="row" style="gap:10px">${userAv(30,r[0],r[4])}<b>${r[0]}</b></div><span class="xs muted">${r[1]}</span></div>${stars(r[2])}<span class="xs" style="font-weight:800">Varian: ${v}</span><p style="margin:0;line-height:1.6">${r[3]}</p></div>`).join('')}</div></div></section>`}
 V.produk=()=>{const p=PRODUCTS[S.product];if(!p.variants.includes(S.psize))S.psize=p.variants[p.variants.length-1];return `${crumb('Toko / '+p.name)}
 <div class="stack"><div class="two" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px">
  <div class="pimg">${prodArt(p.id,4)}</div>
  <div class="sec" style="gap:20px">
-  <div><span class="pill" style="background:var(--blue-soft);color:var(--blue)">${p.cat.toUpperCase()}</span><h1 style="margin:10px 0 6px;font-size:28px">${p.name}</h1><button class="small muted" data-act="toReviews"><span class="star">★</span> ${p.rating} <u>(${p.reviews} Ulasan)</u> • ${p.sold} Terjual</button><div style="font-size:28px;font-weight:800;color:var(--navy);margin-top:12px" class="num">${rp(p.price)}</div></div>
+  <div><span class="pill" style="background:var(--blue-soft);color:var(--blue)">${p.cat.toUpperCase()}</span><h1 style="margin:10px 0 6px;font-size:28px">${p.name}</h1><button class="small muted" data-act="toReviews"><span class="star">★</span> ${p.rating} <u>(${p.reviews} Ulasan)</u> • ${p.sold} Terjual</button><div style="font-size:28px;font-weight:800;color:var(--navy);margin-top:12px" class="num">${rp(p.price)}${p.old?` <s class="muted" style="font-size:16px;font-weight:500">${rp(p.old)}</s>`:''}</div><div class="small" style="margin-top:6px;color:${p.stock<=12?'var(--orange)':'var(--green)'};font-weight:700"><i class="fa-solid fa-box"></i> ${p.stock<=12?'Stok tinggal '+p.stock:'Stok tersedia ('+p.stock+')'} <span class="muted" style="font-weight:500">· Ambil di cabang atau kirim ke rumah</span></div></div>
   <div class="sec" style="gap:10px;border-top:1px solid var(--line);padding-top:18px"><b>Pilih Ukuran</b><div class="row" style="gap:8px">${p.variants.map(v=>`<button class="time ${S.psize===v?'on':''}" style="padding:9px 22px" data-act="psize" data-id="${v}">${v}</button>`).join('')}</div></div>
   <div class="row" style="flex-wrap:wrap"><button class="btn" style="flex:1" data-act="addCart" data-id="${p.id}"><i class="fa-solid fa-cart-shopping"></i> Tambah ke Keranjang</button><button class="btn light" style="flex:1" data-act="buyNow" data-id="${p.id}">Beli Sekarang</button></div>
-  <div class="sec" style="gap:8px;border-top:1px solid var(--line);padding-top:18px"><b>Detail Produk</b><p class="muted" style="margin:0;line-height:1.65;max-width:62ch">${p.desc}</p><b style="margin-top:8px">Kandungan Utama:</b><ul style="margin:0;padding-left:18px;line-height:1.9">${p.ing.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+  <div class="sec" style="gap:8px;border-top:1px solid var(--line);padding-top:18px"><b>Detail Produk</b><p class="muted" style="margin:0;line-height:1.65;max-width:62ch">${p.desc}</p><b style="margin-top:8px">Keunggulan:</b><ul style="margin:0;padding-left:18px;line-height:1.9">${p.ing.map(i=>`<li>${i}</li>`).join('')}</ul></div>
  </div></div>${productReviews()}</div>`};
 V.ulasanProduk=V.produk;
 
@@ -571,7 +617,7 @@ ${ids.length?`<div class="two"><div class="card sec" style="gap:0;padding:0">
 V.checkout=()=>{const t=cartTotals();const sel=Object.entries(S.cart).filter(([,c])=>c.on);const fee=t.fee,total=t.total;return `${crumb('Checkout')}
 <div class="ph"><div><h1>Checkout</h1></div></div>
 <div class="two"><div class="sec" style="gap:22px">
-  <div class="sec" style="gap:10px"><b>Alamat Pengiriman</b><div class="card row" style="align-items:flex-start"><span style="color:var(--red);font-size:18px"><i class="fa-solid fa-location-dot"></i></span><div style="flex:1"><div><b>Budi Pratama</b> <span class="muted">| 0812-3456-7890</span></div><div class="small muted" style="line-height:1.6">Jl. Sudirman No. 12, Kav 4, Jakarta Pusat, 10220</div></div><button class="link" data-act="toast" data-msg="Ubah alamat ada di Profil → Alamat Tersimpan">Ubah</button></div></div>
+  <div class="sec" style="gap:10px"><b>Alamat Pengiriman</b><div class="card row" style="align-items:flex-start"><span style="color:var(--red);font-size:18px"><i class="fa-solid fa-location-dot"></i></span><div style="flex:1"><div><b>Budi Pratama</b> <span class="muted">| 0812-3456-7890</span></div><div class="small muted" style="line-height:1.6">Perumahan Pondok Ungu Permai Blok B No. 12, Bekasi Utara, Kota Bekasi</div></div><button class="link" data-act="toast" data-msg="Ubah alamat ada di Profil → Alamat Tersimpan">Ubah</button></div></div>
   <div class="sec" style="gap:10px"><b>Pesanan Anda</b><div class="card sec">${sel.map(([id,c])=>{const p=PRODUCTS[id];return `<div class="row">${prodArt(id,.7)}<div style="flex:1"><b>${p.name}</b><div class="xs muted">Varian: ${p.variants[p.variants.length-1]}</div><span class="price small num">${rp(p.price)}</span></div><span class="muted">x${c.qty}</span></div>`}).join('')}
    <div class="spread" style="border-top:1px solid var(--line);padding-top:14px"><div><div class="xs muted">Opsi Pengiriman</div><b>Reguler (2-3 Hari)</b></div><b class="num">Rp 15.000</b></div></div></div>
   <div class="sec" style="gap:10px"><b>Pilih Metode Pembayaran</b>${[['qris','QRIS / e-Wallet','fa-qrcode'],['bank','Transfer Bank (BCA/Mandiri)','fa-building-columns'],['cash','Tunai (Cash)','fa-money-bill-wave']].map(m=>`<button class="opt ${S.shipPay===m[0]?'on':''}" data-act="shipPay" data-id="${m[0]}"><span style="width:24px;font-size:16px"><i class="fa-solid ${m[2]}"></i></span><span style="flex:1;font-weight:700">${m[1]}</span><span class="radio"></span></button>`).join('')}</div>
@@ -737,7 +783,7 @@ const ACT={
       const d=await r.json().catch(()=>({}));
       if(tok!==S.scanTok||!S.scanning)return;
       if(r.status===422)return fail('Wajah tidak terdeteksi. Coba foto lain dengan pencahayaan cukup. Kuota tidak terpakai.');
-      if(r.status===429||r.status===503)return fail('Layanan AI Google sedang penuh. Tunggu 1-2 menit lalu coba lagi. Kuota tidak terpakai.');
+      if(r.status===429||r.status===503)return fail('Layanan AI sedang penuh. Tunggu 1-2 menit lalu coba lagi. Kuota tidak terpakai.');
       if(r.status===504)return fail('Analisis terlalu lama. Coba lagi. Kuota tidak terpakai.');
       if(!r.ok||!d.result)return fail('Analisis gagal. Coba lagi nanti. Kuota tidak terpakai.');
       const R=d.result;
@@ -754,22 +800,24 @@ const ACT={
   aiDate:id=>{S.aiDate=id;render(true)},aiTime:id=>{S.aiTime=id;render(true)},
   aiPay:()=>{S.bk.source='ai';S.bk.mode='cabang';go('bayar')},
   mode:id=>{S.bk.mode=id;S.bk.source='book';render(true)},
+  cabangSel:id=>{S.bk.cabang=id;render(true)},
+  bkArea:id=>{S.bkArea=id;const f=Object.values(CABANGS).find(c=>c.short===id);if(f&&(CABANGS[S.bk.cabang]||{}).short!==id)S.bk.cabang=f.id;render(true)},
   svc:id=>{S.bk.svc=id;render(true)},date:id=>{S.bk.date=id;render(true)},time:id=>{S.bk.time=id;render(true)},
   homeSvc:id=>{S.bk.home[id]=!S.bk.home[id];render(true)},
   toPay:()=>go('bayar'),
   usePts:()=>{S.bk.usePoints=!S.bk.usePoints;render(true)},
   bkPay:id=>{S.bk.pay=id;render(true)},
   payBooking:()=>{const b=S.bk,used=ptsUse(),earned=earnBooking(),hd=homeDisc(),base=serviceBase()+(b.mode==='home'&&b.source!=='ai'?15000:0);
-    let k;if(b.source==='ai'){const B=BARBERS[S.barber];k={barber:B.name.split(' ')[0]+' '+B.nick,date:S.aiDate.replace('Jun','Juni')+' 2026',time:S.aiTime,svc:S.style,home:false}}
-    else if(b.mode==='cabang')k={barber:'Andi The Fade Master',date:b.date+' Okt 2026',time:b.time,svc:b.svc==='tfw'?'Textured Fade & Wash':'Classic Haircut',home:false};
-    else k={barber:'Rian "The Specialist"',date:'Hari ini',time:'± 25 menit lagi',svc:bookingLines().filter(l=>l[0]!=='Home Service Fee').map(l=>l[0]).join(' + '),home:true};
+    let k;if(b.source==='ai'){const B=BARBERS[S.barber];k={barber:B.name,cabang:B.addr,date:dayLabel(S.aiDate),time:S.aiTime,svc:S.style,home:false}}
+    else if(b.mode==='cabang'){const cb=CABANGS[b.cabang]||CABANGS.captain_sb,B=BARBERS[cb.barber];k={barber:B.name,cabang:B.addr,date:dayLabel(b.date),time:b.time,svc:b.svc==='tfw'?'Textured Fade & Wash':'Classic Haircut',home:false}}
+    else k={barber:HOMEB.name,date:'Hari ini',time:'± 25 menit lagi',svc:bookingLines().filter(l=>l[0]!=='Home Service Fee').map(l=>l[0]).join(' + '),home:true};
     S.points=S.points-used+earned;if(hd&&tier().id==='platinum')S.homeUsed=true;S.bk.usePoints=false;
     S.ptlog=[[(b.source==='ai'?'Booking '+S.style:'Booking '+k.svc),earned]].concat(used?[['Pakai poin saat bayar',-used]]:[]).concat(S.ptlog);addSpend(base);
     k.earned=earned;S.lastBooking=k;S.upcoming.unshift(k);S.hist=['home'];go('sukses',false)},
   goHome:()=>{S.hist=[];go('home',false)},
   seeOrders:()=>{S.tab='berjalan';S.hist=[];go('pesanan',false)},
   tab:id=>{S.tab=id;render(true)},
-  rateAndi:()=>{S.reviewBarber='andi';S.stars=4;S.review='';S.photo=null;go('tulis')},
+  rateLast:()=>{S.reviewBarber='captain_sb';S.stars=4;S.review='';S.photo=null;go('tulis')},
   cab:id=>{S.cabangFilter=id;render(true)},
   shopCat:id=>{S.shopCat=id;render(true)},
   openReviews:id=>{S.reviewBarber=id;go('ulasanBarber')},
